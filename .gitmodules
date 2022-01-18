@@ -1,0 +1,3 @@
+[submodule "client-specification"]
+	path = client-specification
+	url = git@github.com:Unleash/client-specification.git
