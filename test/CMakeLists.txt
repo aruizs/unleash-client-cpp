@@ -7,3 +7,6 @@ target_link_libraries(tests PRIVATE unleash GTest::gtest_main GTest::gmock
 
 include(GoogleTest)
 gtest_discover_tests(tests)
+
+file(GLOB FILELIST LIST_DIRECTORIES true ${CMAKE_SOURCE_DIR}/client-specification/specifications/*)
+file(COPY ${FILELIST} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/specification)

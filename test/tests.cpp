@@ -22,6 +22,10 @@ using TestParam = std::pair<std::string, std::string>;
 
 std::vector<TestParam> readSpecificationTestFromDisk(const std::string &testPath) {
     std::vector<TestParam> values;
+    if (testPath.empty()) {
+        std::cout << "No test path found. Current path: " << std::filesystem::current_path() << std::endl;
+        return values;
+    }
     // Read index file
     auto testIndexPath = testPath + "index.json";
     std::ifstream i(testIndexPath);
@@ -43,10 +47,7 @@ std::vector<TestParam> readSpecificationTestFromDisk(const std::string &testPath
 
 std::string getTestPath() {
     std::string currentPath = std::filesystem::current_path();
-    const std::string stringToken = "unleash-client-cpp";
-    auto pos = currentPath.find(stringToken);
-    auto projectPath = currentPath.substr(0, pos + stringToken.length());
-    auto testPath = projectPath + "/client-specification/specifications/";
+    auto testPath = currentPath + "/specification/";
     return testPath;
 }
 
