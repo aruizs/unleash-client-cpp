@@ -2,6 +2,7 @@
 #include <nlohmann/json.hpp>
 #include <sstream>
 
+
 namespace unleash {
 UserWithId::UserWithId(const std::string &parameters) : Strategy("userWithId", parameters) {
     auto usersId_json = nlohmann::json::parse(parameters);
@@ -9,6 +10,7 @@ UserWithId::UserWithId(const std::string &parameters) : Strategy("userWithId", p
     std::stringstream sstream(usersId_json["userIds"].get<std::string>());
     std::string userId;
     while (std::getline(sstream, userId, ',')) {
+        userId.erase(remove(userId.begin(), userId.end(), ' '), userId.end());
         m_userIds.push_back(userId);
     }
 }

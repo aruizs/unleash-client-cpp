@@ -6,9 +6,10 @@ ApplicationHostname::ApplicationHostname(const std::string &parameters) : Strate
     auto applicationHostname_json = nlohmann::json::parse(parameters);
     const std::string delimiter = ",";
     std::stringstream sstream(applicationHostname_json["applicationHostnames"].get<std::string>());
-    std::string userId;
-    while (std::getline(sstream, userId, ',')) {
-        m_applicationHostnames.push_back(userId);
+    std::string hostname;
+    while (std::getline(sstream, hostname, ',')) {
+        hostname.erase(remove(hostname.begin(), hostname.end(), ' '), hostname.end());
+        m_applicationHostnames.push_back(hostname);
     }
 }
 

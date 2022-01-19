@@ -10,6 +10,8 @@ GradualRolloutSessionId::GradualRolloutSessionId(const std::string &parameters) 
 }
 
 bool GradualRolloutSessionId::isEnabled(const Context &context) {
-    return normalizedMurmur3(m_groupId + context.sessionId) <= m_percentage;
+    if (context.sessionId.empty())
+        return false;
+    return normalizedMurmur3(m_groupId + ":" + context.sessionId) <= m_percentage;
 }
 }  // namespace unleash

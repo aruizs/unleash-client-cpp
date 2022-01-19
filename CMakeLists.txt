@@ -8,7 +8,7 @@ if(NOT DEFINED CMAKE_CXX_VISIBILITY_PRESET AND NOT DEFINED
   set(CMAKE_VISIBILITY_INLINES_HIDDEN YES)
 endif()
 
-option(ENABLE_TESTING "Enable Test Builds" OFF)
+option(ENABLE_TESTING "Enable Test Builds" ON)
 
 # Let unleash_SHARED_LIBS override BUILD_SHARED_LIBS
 
@@ -25,7 +25,7 @@ add_subdirectory(src)
 
 if(ENABLE_TESTING)
   enable_testing()
-  # add_subdirectory(test)
+  add_subdirectory(test)
 endif()
 
 # Generate the export header for unleash and attach it to the target

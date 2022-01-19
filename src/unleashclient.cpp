@@ -41,6 +41,7 @@ void UnleashClient::initializeClient() {
         if (m_apiClient == nullptr) {
             m_apiClient = std::make_unique<CprClient>(m_url, m_name, m_instanceId);
         }
+        auto apiFeatures = m_apiClient->features();
         m_features = loadFeatures(m_apiClient->features());
         m_thread = std::thread(&UnleashClient::periodicTask, this);
         m_isInitialized = true;
@@ -87,7 +88,10 @@ UnleashClient::featuresMap_t UnleashClient::loadFeatures(const std::string &feat
     for (const auto &[key, value] : featuresJson["features"].items()) {
         std::vector<std::unique_ptr<Strategy>> m_strategies;
         for (const auto &[strategyKey, strategyValue] : value["strategies"].items()) {
-            m_strategies.push_back(std::move(Strategy::createStrategy(strategyValue["name"], strategyValue.value("parameters", ""))));
+            std::string strategyParameters;
+            if (strategyValue.contains("parameters"))
+                strategyParameters = strategyValue["parameters"].dump();
+            m_strategies.push_back(std::move(Strategy::createStrategy(strategyValue["name"].get<std::string>(), strategyParameters)));
         }
         featuresMap.insert(std::pair(value["name"], Feature(value["name"], std::move(m_strategies), value["enabled"])));
     }

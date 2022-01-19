@@ -1,7 +1,7 @@
 #include "unleash/strategies/gradualrolloutuserid.h"
 #include "unleash/strategies/murmur3hash.h"
 #include <nlohmann/json.hpp>
-
+#include <iostream>
 namespace unleash {
 GradualRolloutUserId::GradualRolloutUserId(const std::string &parameters) : Strategy("flexibleRollout", parameters) {
     auto flexibleRollout_json = nlohmann::json::parse(parameters);
@@ -10,6 +10,8 @@ GradualRolloutUserId::GradualRolloutUserId(const std::string &parameters) : Stra
 }
 
 bool GradualRolloutUserId::isEnabled(const Context &context) {
-    return normalizedMurmur3(m_groupId + context.userId) <= m_percentage;
+    if (context.userId.empty())
+        return false;
+    return normalizedMurmur3(m_groupId  + ":" +  context.userId) <= m_percentage;
 }
 }  // namespace unleash

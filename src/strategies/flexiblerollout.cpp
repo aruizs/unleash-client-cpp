@@ -23,7 +23,7 @@ bool FlexibleRollout::isEnabled(const Context &context) {
             stickinessConfiguration = "random";
     }
     if (stickinessConfiguration == "userId") {
-        return normalizedMurmur3(m_groupId + context.userId) <= m_rollout;
+        return normalizedMurmur3(m_groupId + ":" + context.userId) <= m_rollout;
     } else if (stickinessConfiguration == "sessionId") {
         return normalizedMurmur3(m_groupId + context.sessionId) <= m_rollout;
     } else if (stickinessConfiguration == "random") {
