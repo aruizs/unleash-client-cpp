@@ -65,6 +65,7 @@ TEST_P(UnleashSpecificationTest, TestSet) {
         unleash::Context testContext{
                 contextJson.value("userId", ""), contextJson.value("sessionId", ""), contextJson.value("remoteAddress", "")};
         EXPECT_EQ(unleashClient.isEnabled(value["toggleName"], testContext), value["expectedResult"].get<bool>());
+        std::cout << key << std::endl;
     }
 }
 
