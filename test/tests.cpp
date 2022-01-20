@@ -46,8 +46,9 @@ std::vector<TestParam> readSpecificationTestFromDisk(const std::string &testPath
 }
 
 std::string getTestPath() {
-    std::string currentPath = std::filesystem::current_path();
-    auto testPath = currentPath + "/specification/";
+    auto currentPath = std::filesystem::current_path();
+    std::string currentPathStr{currentPath.u8string()};
+    auto testPath = currentPathStr + "/specification/";
     return testPath;
 }
 
