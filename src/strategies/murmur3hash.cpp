@@ -41,6 +41,7 @@ inline uint32_t rotl32(uint32_t x, int8_t r) {
 inline uint64_t rotl64(uint64_t x, int8_t r) {
     return (x << r) | (x >> (64 - r));
 }
+}  // namespace unleash
 
 #define ROTL32(x, y) rotl32(x, y)
 #define ROTL64(x, y) rotl64(x, y)
@@ -52,6 +53,8 @@ inline uint64_t rotl64(uint64_t x, int8_t r) {
 //-----------------------------------------------------------------------------
 // Block read - if your platform needs to do endian-swapping or can only
 // handle aligned reads, do the conversion here
+
+namespace unleash {
 
 FORCE_INLINE uint32_t getblock32(const uint32_t *p, int i) {
     return p[i];
@@ -152,4 +155,4 @@ uint32_t normalizedMurmur3(const std::string &key, uint32_t seed) {
     murmur3Hash += 1;
     return murmur3Hash;
 }
-}
+}  // namespace unleash
