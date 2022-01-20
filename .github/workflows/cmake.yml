@@ -42,4 +42,7 @@ jobs:
 
     - name: Coverage
       run: find . -name '*.gcda' | xargs gcov
+
+    - uses: codecov/codecov-action@v2
+
       
