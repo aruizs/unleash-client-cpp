@@ -57,6 +57,7 @@ TEST_P(UnleashSpecificationTest, TestSet) {
     auto testData = GetParam();
     auto apiMock = std::make_shared<ApiClientMock>();
     unleash::UnleashClient unleashClient = unleash::UnleashClient::create("production", "urlMock").instanceId("intanceId").environment("production").apiClient(apiMock);
+    std::cout << unleashClient << std::endl;
     EXPECT_CALL(*apiMock, features()).WillRepeatedly(Return(testData.first));
     unleashClient.initializeClient();
     nlohmann::json testSet = nlohmann::json::parse(testData.second);
@@ -65,7 +66,6 @@ TEST_P(UnleashSpecificationTest, TestSet) {
         unleash::Context testContext{
                 contextJson.value("userId", ""), contextJson.value("sessionId", ""), contextJson.value("remoteAddress", "")};
         EXPECT_EQ(unleashClient.isEnabled(value["toggleName"], testContext), value["expectedResult"].get<bool>());
-        std::cout << key << std::endl;
     }
 }
 
