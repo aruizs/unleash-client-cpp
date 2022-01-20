@@ -9,6 +9,7 @@ if(NOT DEFINED CMAKE_CXX_VISIBILITY_PRESET AND NOT DEFINED
 endif()
 
 option(ENABLE_TESTING "Enable Test Builds" ON)
+option(ENABLE_TEST_COVERAGE "Enable Test Coverage" OFF)
 
 # Let unleash_SHARED_LIBS override BUILD_SHARED_LIBS
 
