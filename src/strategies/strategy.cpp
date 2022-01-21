@@ -12,8 +12,6 @@ namespace unleash {
 Strategy::Strategy(std::string name, std::string_view parameters) : m_name(std::move(name)), m_parameters(parameters) {
 }
 
-bool Strategy::isEnabled(const Context &context) { return true; }
-
 std::unique_ptr<Strategy> Strategy::createStrategy(std::string_view strategy, std::string_view parameters) {
     if (strategy == "default")
         return std::make_unique<Default>(parameters);

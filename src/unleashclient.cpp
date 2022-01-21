@@ -42,7 +42,11 @@ void UnleashClient::initializeClient() {
             m_apiClient = std::make_unique<CprClient>(m_url, m_name, m_instanceId);
         }
         auto apiFeatures = m_apiClient->features();
-        m_features = loadFeatures(m_apiClient->features());
+        if (apiFeatures.empty()) {
+            std::cerr << "Attempted to initialize an Unleash Client instance without server response." << std::endl;
+            return;
+        }
+        m_features = loadFeatures(apiFeatures);
         m_thread = std::thread(&UnleashClient::periodicTask, this);
         m_isInitialized = true;
     } else {
@@ -76,8 +80,10 @@ bool UnleashClient::isEnabled(const std::string &flag) {
 }
 
 bool UnleashClient::isEnabled(const std::string &flag, const Context &context) {
-    if (auto search = m_features.find(flag); search != m_features.end()) {
-        return m_features.at(flag).isEnabled(context);
+    if (m_isInitialized) {
+        if (auto search = m_features.find(flag); search != m_features.end()) {
+            return m_features.at(flag).isEnabled(context);
+        }
     }
     return false;
 }

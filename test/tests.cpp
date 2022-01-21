@@ -55,14 +55,28 @@ std::string getTestPath() {
 
 class UnleashSpecificationTest : public testing::TestWithParam<TestParam> {};
 
+TEST(UnleashTest, InicializationBadServerUrl) {
+    unleash::UnleashClient unleashClient = unleash::UnleashClient::create("production", "urlMock");
+    std::cout << unleashClient << std::endl;
+    unleashClient.initializeClient();
+    unleashClient.isEnabled("feature.toogle");
+}
+
+TEST(UnleashTest, InicializationErrorServerResponse) {
+    unleash::UnleashClient unleashClient = unleash::UnleashClient::create("production", "https://www.apple.com/%");
+    unleashClient.initializeClient();
+    unleashClient.isEnabled("feature.toogle");
+}
+
+
 TEST_P(UnleashSpecificationTest, TestSet) {
     auto testData = GetParam();
     auto apiMock = std::make_shared<ApiClientMock>();
     unleash::UnleashClient unleashClient = unleash::UnleashClient::create("production", "urlMock").instanceId("intanceId").environment("production").apiClient(apiMock).refreshInterval(1);
-    std::cout << unleashClient << std::endl;
     EXPECT_CALL(*apiMock, features()).WillRepeatedly(Return(testData.first));
     unleashClient.initializeClient();
     nlohmann::json testSet = nlohmann::json::parse(testData.second);
+    unleashClient.initializeClient();  // Retry initialization to check nothing happens
     for (const auto &[key, value] : testSet.items()) {
         auto contextJson = value["context"];
         unleash::Context testContext{
