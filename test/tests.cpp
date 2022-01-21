@@ -58,7 +58,7 @@ class UnleashSpecificationTest : public testing::TestWithParam<TestParam> {};
 TEST_P(UnleashSpecificationTest, TestSet) {
     auto testData = GetParam();
     auto apiMock = std::make_shared<ApiClientMock>();
-    unleash::UnleashClient unleashClient = unleash::UnleashClient::create("production", "urlMock").instanceId("intanceId").environment("production").apiClient(apiMock);
+    unleash::UnleashClient unleashClient = unleash::UnleashClient::create("production", "urlMock").instanceId("intanceId").environment("production").apiClient(apiMock).refreshInterval(1);
     std::cout << unleashClient << std::endl;
     EXPECT_CALL(*apiMock, features()).WillRepeatedly(Return(testData.first));
     unleashClient.initializeClient();
