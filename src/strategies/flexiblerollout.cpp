@@ -23,9 +23,11 @@ bool FlexibleRollout::isEnabled(const Context &context) {
             stickinessConfiguration = "random";
     }
     if (stickinessConfiguration == "userId") {
+        if (context.userId.empty())
+            return false;
         return normalizedMurmur3(m_groupId + ":" + context.userId) <= m_rollout;
     } else if (stickinessConfiguration == "sessionId") {
-        return normalizedMurmur3(m_groupId + context.sessionId) <= m_rollout;
+        return normalizedMurmur3(m_groupId + ":" + context.sessionId) <= m_rollout;
     } else if (stickinessConfiguration == "random") {
         std::random_device dev;
         std::mt19937 rng(dev());

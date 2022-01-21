@@ -34,7 +34,8 @@ std::vector<TestParam> readSpecificationTestFromDisk(const std::string &testPath
 
     // range-based to read each test
     for (auto &element : j) {  // Only features implemented for now
-        if (std::stoi(element.get<std::string>().substr(0, 2)) <= 7) {
+        auto testNumber = std::stoi(element.get<std::string>().substr(0, 2));
+        if (testNumber <= 10 && testNumber != 9) {
             std::cout << testPath + element.get<std::string>() << std::endl;
             std::ifstream testFile(testPath + element.get<std::string>());
             nlohmann::json testJson;
