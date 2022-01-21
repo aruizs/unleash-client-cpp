@@ -5,7 +5,7 @@
 
 namespace unleash {
 
-UnleashClientBuilder UnleashClient::create(std::string name, std::string url) { return UnleashClientBuilder{name, url}; }
+UnleashClientBuilder UnleashClient::create(std::string name, std::string url) { return UnleashClientBuilder{std::move(name), std::move(url)}; }
 
 std::ostream &operator<<(std::ostream &os, const UnleashClient &obj) {
     return os << obj.m_name
@@ -17,12 +17,12 @@ std::ostream &operator<<(std::ostream &os, const UnleashClient &obj) {
 }
 
 UnleashClientBuilder &UnleashClientBuilder::instanceId(std::string instanceId) {
-    unleashClient.m_instanceId = instanceId;
+    unleashClient.m_instanceId = std::move(instanceId);
     return *this;
 }
 
 UnleashClientBuilder &UnleashClientBuilder::environment(std::string environment) {
-    unleashClient.m_environment = environment;
+    unleashClient.m_environment = std::move(environment);
     return *this;
 }
 
@@ -50,9 +50,9 @@ void UnleashClient::initializeClient() {
     }
 }
 
-UnleashClient::UnleashClient(std::string name, std::string url) : m_name(name), m_url(url), m_thread() {}
+UnleashClient::UnleashClient(std::string name, std::string url) : m_name(std::move(name)), m_url(std::move(url)) {}
 
-void UnleashClient::periodicTask() {
+void UnleashClient::periodicTask() const {
     unsigned long globalTimer = 0;
     while (!m_stopThread) {
         std::this_thread::sleep_for(std::chrono::milliseconds(k_pollInterval));
@@ -75,14 +75,14 @@ bool UnleashClient::isEnabled(const std::string &flag) {
     return isEnabled(flag, context);
 }
 
-bool UnleashClient::isEnabled(const std::string &flag, Context &context) {
+bool UnleashClient::isEnabled(const std::string &flag, const Context &context) {
     if (auto search = m_features.find(flag); search != m_features.end()) {
         return m_features.at(flag).isEnabled(context);
     }
     return false;
 }
 
-UnleashClient::featuresMap_t UnleashClient::loadFeatures(const std::string &features) {
+UnleashClient::featuresMap_t UnleashClient::loadFeatures(std::string_view features) const {
     const auto featuresJson = nlohmann::json::parse(features);
     featuresMap_t featuresMap;
     for (const auto &[key, value] : featuresJson["features"].items()) {
@@ -91,9 +91,9 @@ UnleashClient::featuresMap_t UnleashClient::loadFeatures(const std::string &feat
             std::string strategyParameters;
             if (strategyValue.contains("parameters"))
                 strategyParameters = strategyValue["parameters"].dump();
-            m_strategies.push_back(std::move(Strategy::createStrategy(strategyValue["name"].get<std::string>(), strategyParameters)));
+            m_strategies.push_back(Strategy::createStrategy(strategyValue["name"].get<std::string>(), strategyParameters));
         }
-        featuresMap.insert(std::pair(value["name"], Feature(value["name"], std::move(m_strategies), value["enabled"])));
+        featuresMap.try_emplace(value["name"], value["name"], std::move(m_strategies), value["enabled"]);
     }
     return featuresMap;
 }

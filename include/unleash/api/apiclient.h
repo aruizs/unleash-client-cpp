@@ -6,7 +6,7 @@
 namespace unleash {
 class ApiClient {
 public:
-    virtual ~ApiClient() {};
+    virtual ~ApiClient() = default;
     virtual std::string features() = 0;
 };
 }  // namespace unleash

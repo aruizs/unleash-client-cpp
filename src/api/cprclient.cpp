@@ -2,7 +2,7 @@
 #include <cpr/cpr.h>
 
 namespace unleash {
-CprClient::CprClient(const std::string &url, const std::string &name, const std::string &instanceId) : m_url(std::move(url)), m_name(std::move(name)), m_instanceId(std::move(instanceId)) {}
+CprClient::CprClient(std::string url, std::string name, std::string instanceId) : m_url(std::move(url)), m_instanceId(std::move(instanceId)), m_name(std::move(name)) {}
 
 std::string CprClient::features() {
     cpr::Response response = cpr::Get(cpr::Url{m_url + "/client/features"},

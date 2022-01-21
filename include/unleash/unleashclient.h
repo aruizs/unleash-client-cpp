@@ -26,15 +26,17 @@ public:
     static UnleashClientBuilder create(std::string name, std::string url);
     void initializeClient();
     bool isEnabled(const std::string &flag);
-    bool isEnabled(const std::string &flag, Context &context);
+    bool isEnabled(const std::string &flag, const Context &context);
 
 private:
     UnleashClient(std::string name, std::string url);
-    void periodicTask();
-    featuresMap_t loadFeatures(const std::string &features);
+    void periodicTask() const;
+    featuresMap_t loadFeatures(std::string_view features) const;
 
-    std::string m_name, m_url;
-    std::string m_instanceId, m_environment;
+    std::string m_name;
+    std::string m_url;
+    std::string m_instanceId;
+    std::string m_environment;
     unsigned int m_refreshInterval = 15;
     std::thread m_thread;
     bool m_stopThread = false;
@@ -48,7 +50,7 @@ private:
 
 class UNLEASH_EXPORT UnleashClientBuilder {
 public:
-    UnleashClientBuilder(std::string appName, std::string url) : unleashClient(appName, url) {}
+    UnleashClientBuilder(std::string appName, std::string url) : unleashClient(std::move(appName), std::move(url)) {}
 
     operator UnleashClient() { return std::move(unleashClient); }
 

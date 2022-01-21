@@ -7,8 +7,8 @@
 namespace unleash {
 class Default : public Strategy {
 public:
-    Default(const std::string &parameters);
-    bool isEnabled(const Context &context);
+    explicit Default(std::string_view parameters);
+    bool isEnabled(const Context &context) override;
 };
 }
 

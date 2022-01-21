@@ -2,7 +2,7 @@
 #include <nlohmann/json.hpp>
 
 namespace unleash {
-RemoteAddress::RemoteAddress(const std::string &parameters) : Strategy("remoteAddress", parameters) {
+RemoteAddress::RemoteAddress(std::string_view parameters) : Strategy("remoteAddress", parameters) {
     auto remoteAddress_json = nlohmann::json::parse(parameters);
     const std::string delimiter = ",";
     std::stringstream sstream(remoteAddress_json["IPs"].get<std::string>());

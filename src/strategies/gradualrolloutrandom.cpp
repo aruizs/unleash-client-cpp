@@ -4,7 +4,7 @@
 
 
 namespace unleash {
-GradualRolloutRandom::GradualRolloutRandom(const std::string &parameters) : Strategy("flexibleRollout", parameters) {
+GradualRolloutRandom::GradualRolloutRandom(std::string_view parameters) : Strategy("flexibleRollout", parameters) {
     auto flexibleRollout_json = nlohmann::json::parse(parameters);
     m_percentage = std::stoi(flexibleRollout_json["percentage"].get<std::string>());
 }

@@ -3,7 +3,7 @@
 #include <nlohmann/json.hpp>
 #include <iostream>
 namespace unleash {
-GradualRolloutUserId::GradualRolloutUserId(const std::string &parameters) : Strategy("flexibleRollout", parameters) {
+GradualRolloutUserId::GradualRolloutUserId(std::string_view parameters) : Strategy("flexibleRollout", parameters) {
     auto flexibleRollout_json = nlohmann::json::parse(parameters);
     m_groupId = flexibleRollout_json["groupId"].get<std::string>();
     m_percentage = std::stoi(flexibleRollout_json["percentage"].get<std::string>());

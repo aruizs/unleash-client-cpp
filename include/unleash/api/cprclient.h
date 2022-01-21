@@ -6,7 +6,7 @@
 namespace unleash {
 class CprClient : public ApiClient {
 public:
-    CprClient(const std::string &url, const std::string &name, const std::string &instanceId);
+    CprClient(std::string url, std::string name, std::string instanceId);
     std::string features() override;
 
 private:

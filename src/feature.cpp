@@ -1,7 +1,7 @@
 #include "unleash/feature.h"
 
 namespace unleash {
-Feature::Feature(std::string name, std::vector<std::unique_ptr<Strategy>> strategies, bool enable) : m_name(std::move(name)), m_strategies(std::move(strategies)), m_enabled(enable) {}
+Feature::Feature(std::string name, std::vector<std::unique_ptr<Strategy>> strategies, bool enable) : m_name(std::move(name)), m_enabled(enable), m_strategies(std::move(strategies)) {}
 bool Feature::isEnabled(const Context &context) const {
     if (m_enabled) {
         if (m_strategies.empty())

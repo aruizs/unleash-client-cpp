@@ -7,8 +7,8 @@
 namespace unleash {
 class RemoteAddress : public Strategy {
 public:
-    RemoteAddress(const std::string &parameters);
-    bool isEnabled(const Context &context);
+    explicit RemoteAddress(std::string_view parameters);
+    bool isEnabled(const Context &context) override;
 
 private:
     std::vector<std::string> m_ips;

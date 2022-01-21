@@ -9,12 +9,12 @@
 #include "unleash/strategies/userwithid.h"
 
 namespace unleash {
-Strategy::Strategy(std::string name, const std::string &parameters) : m_name(std::move(name)), m_parameters(parameters) {
+Strategy::Strategy(std::string name, std::string_view parameters) : m_name(std::move(name)), m_parameters(parameters) {
 }
 
 bool Strategy::isEnabled(const Context &context) { return true; }
 
-std::unique_ptr<Strategy> Strategy::createStrategy(const std::string &strategy, const std::string &parameters) {
+std::unique_ptr<Strategy> Strategy::createStrategy(std::string_view strategy, std::string_view parameters) {
     if (strategy == "default")
         return std::make_unique<Default>(parameters);
     else if (strategy == "userWithId")

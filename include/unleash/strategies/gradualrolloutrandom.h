@@ -6,8 +6,8 @@
 namespace unleash {
 class GradualRolloutRandom : public Strategy {
 public:
-    GradualRolloutRandom(const std::string &parameters);
-    bool isEnabled(const Context &context);
+    explicit GradualRolloutRandom(std::string_view parameters);
+    bool isEnabled(const Context &context) override;
 
 private:
     uint32_t m_percentage;

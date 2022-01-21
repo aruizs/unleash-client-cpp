@@ -7,8 +7,8 @@
 namespace unleash {
 class UserWithId : public Strategy {
 public:
-    UserWithId(const std::string &parameters);
-    bool isEnabled(const Context &context);
+    explicit UserWithId(std::string_view parameters);
+    bool isEnabled(const Context &context) override;
 
 private:
     std::vector<std::string> m_userIds;

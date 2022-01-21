@@ -2,7 +2,7 @@
 #include <nlohmann/json.hpp>
 
 namespace unleash {
-ApplicationHostname::ApplicationHostname(const std::string &parameters) : Strategy("applicationHostname", parameters) {
+ApplicationHostname::ApplicationHostname(std::string_view parameters) : Strategy("applicationHostname", parameters) {
     auto applicationHostname_json = nlohmann::json::parse(parameters);
     const std::string delimiter = ",";
     std::stringstream sstream(applicationHostname_json["applicationHostnames"].get<std::string>());

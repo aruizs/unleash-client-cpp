@@ -4,7 +4,7 @@
 
 
 namespace unleash {
-UserWithId::UserWithId(const std::string &parameters) : Strategy("userWithId", parameters) {
+UserWithId::UserWithId(std::string_view parameters) : Strategy("userWithId", parameters) {
     auto usersId_json = nlohmann::json::parse(parameters);
     const std::string delimiter = ",";
     std::stringstream sstream(usersId_json["userIds"].get<std::string>());

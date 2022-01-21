@@ -6,8 +6,8 @@
 namespace unleash {
 class GradualRolloutSessionId : public Strategy {
 public:
-    GradualRolloutSessionId(const std::string &parameters);
-    bool isEnabled(const Context &context);
+    explicit GradualRolloutSessionId(std::string_view parameters);
+    bool isEnabled(const Context &context) override;
 
 private:
     std::string m_groupId;

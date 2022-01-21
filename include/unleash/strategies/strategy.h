@@ -8,10 +8,10 @@
 namespace unleash {
 class Strategy {
 public:
-    Strategy(std::string name, const std::string &parameters);
+    Strategy(std::string name, std::string_view parameters);
     virtual ~Strategy() = default;
     virtual bool isEnabled(const Context &context);
-    static std::unique_ptr<Strategy> createStrategy(const std::string &strategy, const std::string &parameters);
+    static std::unique_ptr<Strategy> createStrategy(std::string_view strategy, std::string_view parameters);
 
 private:
     const std::string m_name;
