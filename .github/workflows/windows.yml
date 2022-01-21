@@ -31,5 +31,6 @@ jobs:
       run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} -j10
 
     - name: Test
-      working-directory: ${{github.workspace}}/build/test/Release
-      run: .\tests.exe
+      working-directory: ${{github.workspace}}/build/test
+      run: |
+        .\Release\tests.exe
