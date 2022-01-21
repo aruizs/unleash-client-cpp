@@ -7,7 +7,10 @@ on:
     branches: [ main ]
 
 env:
-  BUILD_TYPE: Debug
+  BUILD_TYPE: Debug  
+  SONAR_SCANNER_VERSION: 4.4.0.2170
+  SONAR_SERVER_URL: "https://sonarcloud.io"
+  BUILD_WRAPPER_OUT_DIR: build_wrapper_output_directory
 
 jobs:
   build:
@@ -29,12 +32,36 @@ jobs:
 
     - name: Setup Ninja
       uses: ashutoshvarma/setup-ninja@master
+    
+    - name: Cache SonarCloud packages
+      uses: actions/cache@v1
+      with:
+        path: ~/.sonar/cache
+        key: ${{ runner.os }}-sonar
+        restore-keys: ${{ runner.os }}-sonar
+        
+    - name: Download and set up sonar-scanner
+      env:
+        SONAR_SCANNER_DOWNLOAD_URL: https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${{ env.SONAR_SCANNER_VERSION }}-linux.zip
+      run: |
+        mkdir -p $HOME/.sonar
+        curl -sSLo $HOME/.sonar/sonar-scanner.zip ${{ env.SONAR_SCANNER_DOWNLOAD_URL }} 
+        unzip -o $HOME/.sonar/sonar-scanner.zip -d $HOME/.sonar/
+        echo "$HOME/.sonar/sonar-scanner-${{ env.SONAR_SCANNER_VERSION }}-linux/bin" >> $GITHUB_PATH
+    
+    - name: Download and set up build-wrapper
+      env:
+        BUILD_WRAPPER_DOWNLOAD_URL: ${{ env.SONAR_SERVER_URL }}/static/cpp/build-wrapper-linux-x86.zip
+      run: |
+        curl -sSLo $HOME/.sonar/build-wrapper-linux-x86.zip ${{ env.BUILD_WRAPPER_DOWNLOAD_URL }}
+        unzip -o $HOME/.sonar/build-wrapper-linux-x86.zip -d $HOME/.sonar/
+        echo "$HOME/.sonar/build-wrapper-linux-x86" >> $GITHUB_PATH
           
     - name: Configure CMake
       run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DENABLE_TEST_COVERAGE=1 -G Ninja
 
-    - name: Build
-      run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} -j10
+    - name: Build with sonnar wrapper
+      run: build-wrapper-linux-x86-64 --out-dir ${{ env.BUILD_WRAPPER_OUT_DIR }} cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} -j10
 
     - name: Test
       working-directory: ${{github.workspace}}/build/test
@@ -44,5 +71,12 @@ jobs:
       run: find . -name '*.gcda' | xargs gcov
 
     - uses: codecov/codecov-action@v2
-
-      
+    
+    - name: Run sonar-scanner
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      run: |
+        sonar-scanner --define sonar.host.url="${{ env.SONAR_SERVER_URL }}" --define sonar.cfamily.build-wrapper-output="${{ env.BUILD_WRAPPER_OUT_DIR }}"
+    
+  
