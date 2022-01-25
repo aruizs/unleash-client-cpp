@@ -56,7 +56,7 @@ void UnleashClient::initializeClient() {
 
 UnleashClient::UnleashClient(std::string name, std::string url) : m_name(std::move(name)), m_url(std::move(url)) {}
 
-void UnleashClient::periodicTask() const {
+void UnleashClient::periodicTask() {
     unsigned long globalTimer = 0;
     while (!m_stopThread) {
         std::this_thread::sleep_for(std::chrono::milliseconds(k_pollInterval));
@@ -64,7 +64,7 @@ void UnleashClient::periodicTask() const {
         if (globalTimer >= m_refreshInterval) {
             globalTimer = 0;
             auto features_response = m_apiClient->features();
-            auto featuresMap = loadFeatures(features_response);
+            m_features = loadFeatures(features_response);
         }
     }
 }
