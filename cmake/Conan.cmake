@@ -19,12 +19,6 @@ macro(run_conan)
 
   include(${CMAKE_BINARY_DIR}/conan.cmake)
 
-  # Add (or remove) remotes as needed conan_add_remote(NAME conan-center URL
-  # https://conan.bintray.com)
-  # conan_add_remote(NAME cci URL https://center.conan.io INDEX 0)
-  # conan_add_remote( NAME bincrafters URL
-  # https://bincrafters.jfrog.io/artifactory/api/conan/public-conan)
-
   # For multi configuration generators, like VS and XCode
   if(NOT CMAKE_CONFIGURATION_TYPES)
     message(STATUS "Single configuration build!")
@@ -43,15 +37,17 @@ macro(run_conan)
     # PATH_OR_REFERENCE ${CMAKE_SOURCE_DIR} is used to tell conan to process the
     # external "conanfile.py" provided with the project Alternatively a
     # conanfile.txt could be used
-    conan_cmake_install(
-      PATH_OR_REFERENCE
-      ${CMAKE_SOURCE_DIR}
-      BUILD
-      missing
-      # Pass compile-time configured options into conan
-      OPTIONS
-      SETTINGS
-      ${settings})
+    if(NOT CONAN_EXPORTED) # if not conan in local cache
+      conan_cmake_install(
+        PATH_OR_REFERENCE
+        ${CMAKE_SOURCE_DIR}
+        BUILD
+        missing
+        # Pass compile-time configured options into conan
+        OPTIONS
+        SETTINGS
+        ${settings})
+    endif()
   endforeach()
 
 endmacro()
