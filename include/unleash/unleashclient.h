@@ -30,14 +30,14 @@ public:
 
 private:
     UnleashClient(std::string name, std::string url);
-    void periodicTask() const;
+    void periodicTask();
     featuresMap_t loadFeatures(std::string_view features) const;
 
     std::string m_name;
     std::string m_url;
     std::string m_instanceId;
     std::string m_environment;
-    unsigned int m_refreshInterval = 15;
+    unsigned int m_refreshInterval = 15000;
     std::thread m_thread;
     bool m_stopThread = false;
     bool m_isInitialized = false;
