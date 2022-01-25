@@ -43,8 +43,7 @@ target_include_directories(
 
 string(COMPARE EQUAL "${CMAKE_SOURCE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}"
                is_top_level)
-option(unleash_INCLUDE_PACKAGING "Include packaging rules for unleash"
-       "${is_top_level}")
+option(unleash_INCLUDE_PACKAGING "Include packaging rules for unleash" ON)
 if(unleash_INCLUDE_PACKAGING)
   add_subdirectory(packaging)
 endif()
