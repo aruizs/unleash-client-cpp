@@ -64,7 +64,8 @@ void UnleashClient::periodicTask() {
         if (globalTimer >= m_refreshInterval) {
             globalTimer = 0;
             auto features_response = m_apiClient->features();
-            m_features = loadFeatures(features_response);
+            if (!features_response.empty())
+                m_features = loadFeatures(features_response);
         }
     }
 }
