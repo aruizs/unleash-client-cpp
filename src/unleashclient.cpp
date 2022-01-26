@@ -36,10 +36,15 @@ UnleashClientBuilder &UnleashClientBuilder::apiClient(std::shared_ptr<ApiClient>
     return *this;
 }
 
+UnleashClientBuilder &UnleashClientBuilder::authentication(std::string authentication) {
+    unleashClient.m_authentication = std::move(authentication);
+    return *this;
+}
+
 void UnleashClient::initializeClient() {
     if (!m_isInitialized) {
         if (m_apiClient == nullptr) {
-            m_apiClient = std::make_unique<CprClient>(m_url, m_name, m_instanceId);
+            m_apiClient = std::make_unique<CprClient>(m_url, m_name, m_instanceId, m_authentication);
         }
         auto apiFeatures = m_apiClient->features();
         if (apiFeatures.empty()) {
