@@ -5,8 +5,11 @@
 
 namespace unleash {
 GradualRolloutRandom::GradualRolloutRandom(std::string_view parameters) : Strategy("flexibleRollout", parameters) {
-    auto flexibleRollout_json = nlohmann::json::parse(parameters);
-    m_percentage = std::stoi(flexibleRollout_json["percentage"].get<std::string>());
+    auto gradualRollout_json = nlohmann::json::parse(parameters);
+    if (gradualRollout_json["percentage"].type() == nlohmann::json::value_t::string)
+        m_percentage = std::stoi(gradualRollout_json["percentage"].get<std::string>());
+    else
+        m_percentage = gradualRollout_json["percentage"];
 }
 
 bool GradualRolloutRandom::isEnabled(const Context &context) {
