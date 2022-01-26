@@ -1,4 +1,3 @@
-from conans import ConanFile
 from conans import ConanFile, CMake, tools
 
 required_conan_version = ">=1.33.0"
@@ -6,7 +5,7 @@ required_conan_version = ">=1.33.0"
 
 class UnleashConan(ConanFile):
     name = "unleash-client-cpp"
-    version = "0.0.1"
+    version = "1.0.0"
     homepage = "https://github.com/aruizs/unleash-client-cpp/"
     license = "MIT"
     url = "https://github.com/conan-io/conan-center-index"
@@ -31,13 +30,15 @@ class UnleashConan(ConanFile):
         "nlohmann_json/3.10.5",
     )
 
-    short_paths = True
-
     _cmake = None
 
     def config_options(self):
         if self.settings.os == "Windows":
             del self.options.fPIC
+
+    def validate(self):
+        if self.settings.compiler.cppstd:
+            tools.check_min_cppstd(self, 17)
 
     def configure(self):
         if self.options.shared:
