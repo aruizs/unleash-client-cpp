@@ -6,6 +6,7 @@ required_conan_version = ">=1.33.0"
 
 class UnleashConan(ConanFile):
     name = "unleash-client-cpp"
+    version = "0.0.1"
     homepage = "https://github.com/aruizs/unleash-client-cpp/"
     license = "MIT"
     url = "https://github.com/conan-io/conan-center-index"
@@ -57,9 +58,10 @@ class UnleashConan(ConanFile):
         cmake.build()
 
     def package(self):
-        self.copy("License.txt", dst="licenses")
+        self.copy("LICENSE", dst="licenses")
         cmake = self._configure_cmake()
         cmake.install()
 
     def package_info(self):
         self.cpp_info.libs = ["unleash"]
+        self.cpp_info.names["cmake_find_package"] = "unleash"
