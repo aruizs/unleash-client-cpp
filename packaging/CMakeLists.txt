@@ -27,21 +27,5 @@ else()
   set(type static)
 endif()
 
-install(
-  EXPORT unleash_Targets
-  DESTINATION "${unleash_INSTALL_CMAKEDIR}"
-  NAMESPACE unleash::
-  FILE unleash-${type}-targets.cmake
-  COMPONENT unleash_Development)
-
-write_basic_package_version_file(unleashConfigVersion.cmake
-                                 COMPATIBILITY SameMajorVersion)
-
-install(
-  FILES "${CMAKE_CURRENT_SOURCE_DIR}/unleashConfig.cmake"
-        "${CMAKE_CURRENT_BINARY_DIR}/unleashConfigVersion.cmake"
-  DESTINATION "${unleash_INSTALL_CMAKEDIR}"
-  COMPONENT unleash_Development)
-
 # TODO: add additional CPack variables here
 include(CPack)
