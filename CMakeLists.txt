@@ -8,6 +8,13 @@ if(NOT DEFINED CMAKE_CXX_VISIBILITY_PRESET AND NOT DEFINED
   set(CMAKE_VISIBILITY_INLINES_HIDDEN YES)
 endif()
 
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE
+      "Release"
+      CACHE STRING "Choose the type of build, options are: Debug Release
+RelWithDebInfo MinSizeRel." FORCE)
+endif(NOT CMAKE_BUILD_TYPE)
+
 option(ENABLE_TESTING "Enable Test Builds" ON)
 option(ENABLE_TEST_COVERAGE "Enable Test Coverage" OFF)
 
