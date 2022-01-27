@@ -1,5 +1,6 @@
 #include "unleash/api/apiclient.h"
 #include "unleash/context.h"
+#include "unleash/strategies/applicationhostname.h"
 #include "unleash/unleashclient.h"
 #include <filesystem>
 #include <fstream>
@@ -7,7 +8,6 @@
 #include <gtest/gtest.h>
 #include <iostream>
 #include <nlohmann/json.hpp>
-#include <random>
 #include <thread>
 
 using ::testing::Return;
@@ -59,15 +59,21 @@ TEST(UnleashTest, InicializationBadServerUrl) {
     unleash::UnleashClient unleashClient = unleash::UnleashClient::create("production", "urlMock");
     std::cout << unleashClient << std::endl;
     unleashClient.initializeClient();
-    unleashClient.isEnabled("feature.toogle");
+    EXPECT_FALSE(unleashClient.isEnabled("feature.toogle"));
 }
 
 TEST(UnleashTest, InicializationErrorServerResponse) {
     unleash::UnleashClient unleashClient = unleash::UnleashClient::create("production", "https://www.apple.com/%");
     unleashClient.initializeClient();
-    unleashClient.isEnabled("feature.toogle");
+    EXPECT_FALSE(unleashClient.isEnabled("feature.toogle"));
 }
 
+TEST(UnleashTest, ApplicationHostname) {
+    const std::string parameters = "{\"hostNames\": \"testHostname\"}";
+    unleash::ApplicationHostname appHost{parameters};
+    unleash::Context context;
+    EXPECT_FALSE(appHost.isEnabled(context));
+}
 
 TEST_P(UnleashSpecificationTest, TestSet) {
     auto testData = GetParam();
