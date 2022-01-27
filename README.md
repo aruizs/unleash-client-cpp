@@ -89,6 +89,12 @@ unleashClient.isEnabled("feature.toogle");
 *To be documented. This package is pending to be published in Conan Center as unleash-client-cpp/1.0.0*
 
 
+## Tested services
+
+- *Gitlab* using `application name` and `instance id` parameters for authentication.
+- *Self-hosted unleash* using `client token` for authentication.
+
+
 ## Used third-party tools
 
 Thanks a lot to the following tools for your contribution:
