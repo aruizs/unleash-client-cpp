@@ -1,10 +1,9 @@
 #include "unleash/strategies/userwithid.h"
+#include <iostream>
 #include <nlohmann/json.hpp>
-#include <sstream>
-
 
 namespace unleash {
-UserWithId::UserWithId(std::string_view parameters) : Strategy("userWithId", parameters) {
+UserWithId::UserWithId(std::string_view parameters, std::string_view constraints) : Strategy("userWithId", parameters, constraints) {
     auto usersId_json = nlohmann::json::parse(parameters);
     const std::string delimiter = ",";
     std::stringstream sstream(usersId_json["userIds"].get<std::string>());
@@ -16,7 +15,7 @@ UserWithId::UserWithId(std::string_view parameters) : Strategy("userWithId", par
 }
 
 bool UserWithId::isEnabled(const Context &context) {
-    if (std::find(m_userIds.begin(), m_userIds.end(), context.userId) != m_userIds.end())
+    if (meetConstraints(context) && std::find(m_userIds.begin(), m_userIds.end(), context.userId) != m_userIds.end())
         return true;
     return false;
 }

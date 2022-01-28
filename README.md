@@ -18,7 +18,7 @@ The below table shows what features the SDKs support or plan to support.
 - [x] Built-in strategies
 - [x] Unleash context
 - [ ] Custom strategies
-- [ ] Strategy constrains
+- [x] Strategy constrains
 - [ ] Variants
 - [ ] Usage Metrics
 

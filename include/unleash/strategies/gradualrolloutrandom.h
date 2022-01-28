@@ -6,7 +6,7 @@
 namespace unleash {
 class GradualRolloutRandom : public Strategy {
 public:
-    explicit GradualRolloutRandom(std::string_view parameters);
+    explicit GradualRolloutRandom(std::string_view parameters, std::string_view constraints = {});
     bool isEnabled(const Context &context) override;
 
 private:

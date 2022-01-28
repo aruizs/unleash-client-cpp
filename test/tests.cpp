@@ -35,7 +35,7 @@ std::vector<TestParam> readSpecificationTestFromDisk(const std::string &testPath
     // range-based to read each test
     for (auto &element : j) {  // Only features implemented for now
         auto testNumber = std::stoi(element.get<std::string>().substr(0, 2));
-        if (testNumber <= 10 && testNumber != 9) {
+        if (testNumber <= 11) {
             std::cout << testPath + element.get<std::string>() << std::endl;
             std::ifstream testFile(testPath + element.get<std::string>());
             nlohmann::json testJson;
@@ -86,7 +86,12 @@ TEST_P(UnleashSpecificationTest, TestSet) {
     for (const auto &[key, value] : testSet.items()) {
         auto contextJson = value["context"];
         unleash::Context testContext{
-                contextJson.value("userId", ""), contextJson.value("sessionId", ""), contextJson.value("remoteAddress", "")};
+                contextJson.value("userId", ""), contextJson.value("sessionId", ""), contextJson.value("remoteAddress", ""), contextJson.value("environment", ""), contextJson.value("appName", "")};
+        if (contextJson.contains("properties")) {
+            for (auto &[propertyKey, propertyValue] : contextJson["properties"].items()) {
+                testContext.properties.try_emplace(propertyKey, propertyValue);
+            }
+        }
         EXPECT_EQ(unleashClient.isEnabled(value["toggleName"], testContext), value["expectedResult"].get<bool>());
     }
 }
