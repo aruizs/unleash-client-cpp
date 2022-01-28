@@ -8,6 +8,8 @@ struct Context {
     std::string userId;
     std::string sessionId;
     std::string remoteAddress;
+    std::string environment;
+    std::string appName;
     std::map<std::string, std::string> properties;
 };
 }  // namespace unleash

@@ -7,7 +7,7 @@
 namespace unleash {
 class UserWithId : public Strategy {
 public:
-    explicit UserWithId(std::string_view parameters);
+    explicit UserWithId(std::string_view parameters, std::string_view constraints = {});
     bool isEnabled(const Context &context) override;
 
 private:

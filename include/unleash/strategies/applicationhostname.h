@@ -7,7 +7,7 @@
 namespace unleash {
 class ApplicationHostname : public Strategy {
 public:
-    explicit ApplicationHostname(std::string_view parameters);
+    explicit ApplicationHostname(std::string_view parameters, std::string_view constraints = {});
     bool isEnabled(const Context &context) override;
 
 private:

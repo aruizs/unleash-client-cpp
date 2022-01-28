@@ -6,7 +6,7 @@
 namespace unleash {
 class FlexibleRollout : public Strategy {
 public:
-    explicit FlexibleRollout(std::string_view parameters);
+    explicit FlexibleRollout(std::string_view parameters, std::string_view constraints = {});
     bool isEnabled(const Context &context) override;
 
 private:

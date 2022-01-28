@@ -7,7 +7,7 @@
 namespace unleash {
 class RemoteAddress : public Strategy {
 public:
-    explicit RemoteAddress(std::string_view parameters);
+    explicit RemoteAddress(std::string_view parameters, std::string_view constraints = {});
     bool isEnabled(const Context &context) override;
 
 private:

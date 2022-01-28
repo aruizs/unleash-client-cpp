@@ -6,7 +6,7 @@
 namespace unleash {
 class GradualRolloutSessionId : public Strategy {
 public:
-    explicit GradualRolloutSessionId(std::string_view parameters);
+    explicit GradualRolloutSessionId(std::string_view parameters, std::string_view constraints = {});
     bool isEnabled(const Context &context) override;
 
 private:
