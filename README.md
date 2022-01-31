@@ -17,11 +17,11 @@ The below table shows what features the SDKs support or plan to support.
 - [x] Feature toggles
 - [x] Built-in strategies
 - [x] Unleash context
-- [ ] Custom strategies
 - [x] Strategy constrains
-- [ ] Variants
+- [ ] Application registration
 - [ ] Usage Metrics
-
+- [ ] Variants
+- [ ] Custom stickiness
 
 ## Requirements
 
