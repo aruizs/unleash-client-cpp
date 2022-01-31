@@ -4,7 +4,7 @@
 #include <random>
 
 namespace unleash {
-FlexibleRollout::FlexibleRollout(std::string_view parameters, std::string_view constraints) : Strategy("flexibleRollout", parameters, constraints) {
+FlexibleRollout::FlexibleRollout(std::string_view parameters, std::string_view constraints) : Strategy("flexibleRollout", constraints) {
     auto flexibleRollout_json = nlohmann::json::parse(parameters);
     m_groupId = flexibleRollout_json["groupId"].get<std::string>();
     if (flexibleRollout_json["rollout"].type() == nlohmann::json::value_t::string)

@@ -33,7 +33,7 @@ void getHostname(char machineName[150]) {
     strncpy(machineName, Name, 150);
 }
 
-ApplicationHostname::ApplicationHostname(std::string_view parameters, std::string_view constraints) : Strategy("applicationHostname", parameters, constraints) {
+ApplicationHostname::ApplicationHostname(std::string_view parameters, std::string_view constraints) : Strategy("applicationHostname", constraints) {
     auto applicationHostname_json = nlohmann::json::parse(parameters);
     const std::string delimiter = ",";
     std::stringstream sstream(applicationHostname_json["hostNames"].get<std::string>());
