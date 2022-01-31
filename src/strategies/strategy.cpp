@@ -13,7 +13,7 @@
 
 
 namespace unleash {
-Strategy::Strategy(std::string name, std::string_view parameters, std::string_view constraints) : m_name(std::move(name)), m_parameters(parameters) {
+Strategy::Strategy(std::string name, std::string_view parameters, std::string_view constraints) : m_name(std::move(name)) {
     if (!constraints.empty()) {
         auto constraint_json = nlohmann::json::parse(constraints);
         for (const auto &[key, value] : constraint_json.items()) {

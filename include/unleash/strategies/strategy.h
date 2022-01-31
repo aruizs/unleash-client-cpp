@@ -28,7 +28,6 @@ private:
     bool checkContextConstraint(const Context &context, const Constraint &constraint) const;
 
     const std::string m_name;
-    const std::string m_parameters;
     std::vector<Constraint> m_constraints;
 };
 }  // namespace unleash
