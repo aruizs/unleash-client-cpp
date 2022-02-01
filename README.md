@@ -8,7 +8,8 @@
 [![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=aruizs_unleash-client-cpp&metric=reliability_rating)](https://sonarcloud.io/summary/new_code?id=aruizs_unleash-client-cpp)
 [![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=aruizs_unleash-client-cpp&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=aruizs_unleash-client-cpp)
 
-This repository provides a C++ client SDK for Unleash that meets the [Unleash Client Specifications](https://github.com/Unleash/client-specification).
+This repository provides a C++ client SDK for Unleash that meets
+the [Unleash Client Specifications](https://github.com/Unleash/client-specification).
 
 ## Features
 
@@ -35,9 +36,8 @@ The below table shows what features the SDKs support or plan to support.
 
 ### Initialization
 
-The `unleashClient` can be initialized with the following parameters but only `appName` and `unleashServerUrl` are mandatories.
-
-
+The `unleashClient` can be initialized with the following parameters but only `appName` and `unleashServerUrl` are
+mandatories.
 
 | Config      | Required? | Type | Default value |
 |-------------|-----------| ---- |---------------|
@@ -48,29 +48,18 @@ The `unleashClient` can be initialized with the following parameters but only `a
 | Authentication | No        | String | N/A |
 | Refresh Interval (ms) | No        | Int | 15000 |
 
-
-
     unleash::UnleashClient unleashClient = unleash::UnleashClient::create("appName", "unleashServerUrl").instanceId("intanceId").environment("environment").authentication("token).refreshInterval("pollingTime");
     unleashClient.initializeClient();
 
-
-
-
-
-
 ### Feature Flag is enabled?
 
-
 - Simple toggle:
-
 
 ```
 unleashClient.isEnabled("feature.toogle");
 ```
 
-
 - Toggle with context:
-
 
 ```
     #include "unleash/context.h"
@@ -80,26 +69,34 @@ unleashClient.isEnabled("feature.toogle");
 ```
 
 ## Integration
+
 ### CMake
 
-*To be documented*
+The following requirements need to be installed to build the library using CMake:
+
+- CMake 3.19+
+- Conan 1.40
+
+By default, it provides the static library. The shared version shall be available using the CMake
+option `BUILD_SHARED_LIB=YES`.
+
+The installation files include the `UnleashConfig.cmake` to integrate this library using the target `unleash::unleash`.
 
 ### Conan
 
-*To be documented. This package is pending to be published in Conan Center as unleash-client-cpp/1.0.0*
-
+This package is pending to be published in Conan Center as unleash-client-cpp/1.0.1.
 
 ## Tested services
 
 - *Gitlab* using `application name` and `instance id` parameters for authentication.
 - *Self-hosted unleash* using `client token` for authentication.
 
-
 ## Used third-party tools
 
 Thanks a lot to the following tools for your contribution:
 
-- [Building a Dual Shared and Static Library with CMake](https://github.com/alexreinking/SharedStaticStarter) for the CMake library template.
+- [Building a Dual Shared and Static Library with CMake](https://github.com/alexreinking/SharedStaticStarter) for the
+  CMake library template.
 - [C++ Requests: Curl for People](https://github.com/libcpr/cpr) for the API client library.
 - [JSON for Modern C++](https://github.com/nlohmann/json) for the JSON handling library.
 - [Codecov](https://about.codecov.io/) for code coverage solution.
