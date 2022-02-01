@@ -78,7 +78,7 @@ TEST(UnleashTest, ApplicationHostname) {
 TEST_P(UnleashSpecificationTest, TestSet) {
     auto testData = GetParam();
     auto apiMock = std::make_shared<ApiClientMock>();
-    unleash::UnleashClient unleashClient = unleash::UnleashClient::create("production", "urlMock").instanceId("intanceId").environment("production").apiClient(apiMock).refreshInterval(1);
+    unleash::UnleashClient unleashClient = unleash::UnleashClient::create("production", "urlMock").instanceId("intanceId").environment("production").apiClient(apiMock).refreshInterval(1).authentication("clientToken");
     EXPECT_CALL(*apiMock, features()).WillRepeatedly(Return(testData.first));
     unleashClient.initializeClient();
     nlohmann::json testSet = nlohmann::json::parse(testData.second);
