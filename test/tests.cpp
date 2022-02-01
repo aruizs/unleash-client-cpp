@@ -1,6 +1,6 @@
 #include "unleash/api/apiclient.h"
 #include "unleash/context.h"
-#include "unleash/strategies/applicationhostname.h"
+#include "unleash/strategies/strategy.h"
 #include "unleash/unleashclient.h"
 #include <filesystem>
 #include <fstream>
@@ -70,9 +70,9 @@ TEST(UnleashTest, InicializationErrorServerResponse) {
 
 TEST(UnleashTest, ApplicationHostname) {
     const std::string parameters = "{\"hostNames\": \"testHostname\"}";
-    unleash::ApplicationHostname appHost{parameters};
+    auto appHost = unleash::Strategy::createStrategy("applicationHostname", parameters);
     unleash::Context context;
-    EXPECT_FALSE(appHost.isEnabled(context));
+    EXPECT_FALSE(appHost->isEnabled(context));
 }
 
 TEST_P(UnleashSpecificationTest, TestSet) {
