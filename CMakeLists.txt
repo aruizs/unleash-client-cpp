@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.19)
+cmake_minimum_required(VERSION 3.14)
 project(unleash VERSION 1.0.0)
 
 # C++ language configuration boilerplate
