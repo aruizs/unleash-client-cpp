@@ -84,7 +84,7 @@ The installation files include the `UnleashConfig.cmake` to integrate this libra
 
 ### Conan
 
-This package is pending to be published in Conan Center as unleash-client-cpp/1.0.1.
+This package is published in Conan Center as [unleash-client-cpp/1.1.1](https://conan.io/center/unleash-client-cpp).
 
 ## Tested services
 
