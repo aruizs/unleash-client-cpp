@@ -27,7 +27,7 @@ class UnleashConan(ConanFile):
     requires = (
         "gtest/cci.20210126",
         "cpr/1.7.2",
-        "nlohmann_json/3.10.5",
+        "nlohmann_json/3.11.2",
     )
 
     _cmake = None
