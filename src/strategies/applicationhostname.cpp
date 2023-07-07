@@ -1,5 +1,6 @@
 #include "unleash/strategies/applicationhostname.h"
 #include <nlohmann/json.hpp>
+#include <sstream>
 #ifdef WIN32
 #include <Windows.h>
 #include <tchar.h>
