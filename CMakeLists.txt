@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.14)
 project(unleash VERSION 1.0.0)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 # C++ language configuration boilerplate
 if(NOT DEFINED CMAKE_CXX_VISIBILITY_PRESET AND NOT DEFINED
                                                CMAKE_VISIBILITY_INLINES_HIDDEN)
@@ -18,6 +20,9 @@ endif(NOT CMAKE_BUILD_TYPE)
 option(ENABLE_TESTING "Enable Test Builds" ON)
 option(ENABLE_TEST_COVERAGE "Enable Test Coverage" OFF)
 
+find_package(cpr)
+find_package(nlohmann_json)
+
 # Let unleash_SHARED_LIBS override BUILD_SHARED_LIBS
 
 if(DEFINED unleash_SHARED_LIBS)
@@ -25,8 +30,8 @@ if(DEFINED unleash_SHARED_LIBS)
 endif()
 
 # External dependencies using Conan.io
-include(cmake/Conan.cmake)
-run_conan()
+# include(cmake/Conan.cmake)
+# run_conan()
 
 # Create the main unleash library target
 add_subdirectory(src)
