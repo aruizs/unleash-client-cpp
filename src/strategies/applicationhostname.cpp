@@ -13,7 +13,6 @@ namespace unleash {
 
 void getHostname(char machineName[150]) {
     char Name[150];
-    int i = 0;
 
 #ifdef WIN32
     TCHAR infoBuf[150];
