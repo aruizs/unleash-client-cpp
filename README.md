@@ -70,17 +70,27 @@ unleashClient.isEnabled("feature.toogle");
 
 ## Integration
 
-### CMake
+### Building with CMake
 
 The following requirements need to be installed to build the library using CMake:
 
 - CMake 3.19+
-- Conan 1.40
+- Conan 2 (CMakeDeps Generator)
 
 By default, it provides the static library. The shared version shall be available using the CMake
 option `BUILD_SHARED_LIB=YES`.
 
 The installation files include the `UnleashConfig.cmake` to integrate this library using the target `unleash::unleash`.
+
+To build unleash client with conan and CMake run the following commands:
+
+```
+conan install . --output-folder=build --build=missing --settings=build_type=Debug
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_PREFIX_PATH=$(pwd)/build
+cmake --build build
+```
+
+Substitute `Debug` for `Release` to build the release version. The `CMAKE_PREFIX_PATH` and `--output-folder` parameters should point to the same directory, make sure to use an absolute path for the `CMAKE_PREFIX_PATH`.
 
 ### Conan
 

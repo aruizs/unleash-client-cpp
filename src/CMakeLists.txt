@@ -14,7 +14,8 @@ add_library(
   strategies/gradualrolloutuserid.cpp
   strategies/gradualrolloutsessionid.cpp
   strategies/gradualrolloutrandom.cpp)
-# add_library(unleash::unleash ALIAS unleash)
+
+add_library(unleash::unleash ALIAS unleash)
 target_include_directories(
   unleash PUBLIC "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>")
 target_link_libraries(unleash PRIVATE cpr::cpr
