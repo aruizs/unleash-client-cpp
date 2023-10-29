@@ -26,11 +26,8 @@ jobs:
       uses: turtlebrowser/get-conan@v1.0
       
     - name: Create default profile
-      run: conan profile new default --detect
-      
-    - name: Update profile
-      run: conan profile update settings.compiler.libcxx=libstdc++11 default
-
+      run: conan profile detect
+    
     - name: Setup Ninja
       uses: ashutoshvarma/setup-ninja@master
     
@@ -57,7 +54,11 @@ jobs:
         curl -sSLo $HOME/.sonar/build-wrapper-linux-x86.zip ${{ env.BUILD_WRAPPER_DOWNLOAD_URL }}
         unzip -o $HOME/.sonar/build-wrapper-linux-x86.zip -d $HOME/.sonar/
         echo "$HOME/.sonar/build-wrapper-linux-x86" >> $GITHUB_PATH
-          
+
+    - name: install dependencies
+      run: conan install . --output-folder=build --build=missing --settings=build_type=${{env.BUILD_TYPE}} 
+      
+
     - name: Configure CMake
       run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DENABLE_TEST_COVERAGE=1 -G Ninja
 
