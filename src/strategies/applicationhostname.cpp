@@ -19,7 +19,7 @@ void getHostname(char machineName[150]) {
     DWORD bufCharCount = 150;
     memset(Name, 0, 150);
     if (GetComputerName(infoBuf, &bufCharCount)) {
-        for (i = 0; i < 150; i++) {
+        for (size_t i = 0; i < 150; i++) {
             Name[i] = infoBuf[i];
         }
     } else {
