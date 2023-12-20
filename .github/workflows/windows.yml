@@ -8,14 +8,11 @@ on:
 
 env:
   BUILD_TYPE: Release
+  BUILD_TYPE_LOWER: release
 
 jobs:
   build:
     runs-on: windows-latest
-
-    defaults:
-      run:
-        shell: bash
 
     steps:
     - uses: actions/checkout@v2
@@ -35,7 +32,7 @@ jobs:
       run: cmake -S . --preset conan-default
 
     - name: Build
-      run: cmake --build --preset conan-${BUILD_TYPE,,} -j10
+      run: cmake --build --preset conan-${{env.BUILD_TYPE_LOWER}} -j10
 
     - name: Test
-      run: ctest --preset conan-${BUILD_TYPE,,}
+      run: ctest --preset conan-${{env.BUILD_TYPE_LOWER}}
