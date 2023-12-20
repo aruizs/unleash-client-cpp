@@ -1,7 +1,13 @@
 [requires]
+cpr/1.10.5
+nlohmann_json/3.11.3
+
+[test_requires]
 gtest/cci.20210126
-cpr/1.7.2
-nlohmann_json/3.10.5
 
 [generators]
+CMakeToolchain
 CMakeDeps
+
+[layout]
+cmake_layout
