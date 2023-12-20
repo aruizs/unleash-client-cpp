@@ -29,7 +29,7 @@ jobs:
       run: conan profile detect
 
     - name: install dependencies
-      run: conan install . --build=missing --settings=build_type=${{env.BUILD_TYPE}}
+      run: conan install . --build=missing --settings=build_type=${{env.BUILD_TYPE}} -s compiler.cppstd=17
 
     - name: Configure CMake
       run: cmake -S . --preset conan-${BUILD_TYPE,,} -DENABLE_TEST_COVERAGE=1

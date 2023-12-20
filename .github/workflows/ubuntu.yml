@@ -60,7 +60,7 @@ jobs:
         echo "$HOME/.sonar/build-wrapper-linux-x86" >> $GITHUB_PATH
 
     - name: install dependencies
-      run: conan install . --build=missing --settings=build_type=${{env.BUILD_TYPE}}
+      run: conan install . --build=missing --settings=build_type=${{env.BUILD_TYPE}} -s compiler.cppstd=17
       
 
     - name: Configure CMake
