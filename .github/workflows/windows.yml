@@ -32,7 +32,7 @@ jobs:
       run: conan install . --build=missing --settings=build_type=${{env.BUILD_TYPE}} -s compiler.cppstd=17
 
     - name: Configure CMake
-      run: cmake -S . --preset conan-${BUILD_TYPE,,}
+      run: cmake -S . --preset conan-default
 
     - name: Build
       run: cmake --build --preset conan-${BUILD_TYPE,,} -j10
