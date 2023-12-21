@@ -8,6 +8,7 @@ on:
 
 env:
   BUILD_TYPE: Debug
+  BUILD_TYPE_LOWER: debug
 
 jobs:
   build:
@@ -24,20 +25,14 @@ jobs:
     - name: Create default profile
       run: conan profile detect
 
-      
     - name: install dependencies
-      run: conan install . --output-folder=build --build=missing --settings=build_type=${{env.BUILD_TYPE}} 
-      
-          
+      run: conan install . --build=missing --settings=build_type=${{env.BUILD_TYPE}} -s compiler.cppstd=17
+
     - name: Configure CMake
-      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DENABLE_TEST_COVERAGE=1 -DCMAKE_PREFIX_PATH=${{github.workspace}}/build
+      run: cmake -S . --preset conan-${{env.BUILD_TYPE_LOWER}} -DENABLE_TEST_COVERAGE=1
 
     - name: Build
-      run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
+      run: cmake --build --preset conan-${{env.BUILD_TYPE_LOWER}}
 
     - name: Test
-      working-directory: ${{github.workspace}}/build/test
-      run: ./tests
-
-
-      
+      run: ctest --preset conan-${{env.BUILD_TYPE_LOWER}}

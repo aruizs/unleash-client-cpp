@@ -8,6 +8,7 @@ on:
 
 env:
   BUILD_TYPE: Release
+  BUILD_TYPE_LOWER: release
 
 jobs:
   build:
@@ -25,15 +26,13 @@ jobs:
       run: conan profile detect
 
     - name: install dependencies
-      run: conan install . --output-folder=build --build=missing --settings=build_type=${{env.BUILD_TYPE}} 
-          
+      run: conan install . --build=missing --settings=build_type=${{env.BUILD_TYPE}} -s compiler.cppstd=17
+
     - name: Configure CMake
-      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_PREFIX_PATH=${{github.workspace}}/build
+      run: cmake -S . --preset conan-default
 
     - name: Build
-      run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} -j10
+      run: cmake --build --preset conan-${{env.BUILD_TYPE_LOWER}} -j10
 
     - name: Test
-      working-directory: ${{github.workspace}}/build/test
-      run: |
-        .\Release\tests.exe
+      run: ctest --preset conan-${{env.BUILD_TYPE_LOWER}}

@@ -86,9 +86,10 @@ The installation files include the `UnleashConfig.cmake` to integrate this libra
 To build unleash client with conan and CMake run the following commands:
 
 ```
-conan install . --output-folder=build --build=missing --settings=build_type=Debug
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_PREFIX_PATH=$(pwd)/build
-cmake --build build
+conan install . --build=missing --settings=build_type=Debug
+cmake -S . --preset conan-debug
+cmake --build --preset conan-debug
+ctest --preset conan-debug
 ```
 
 Substitute `Debug` for `Release` to build the release version. The `CMAKE_PREFIX_PATH` and `--output-folder` parameters should point to the same directory, make sure to use an absolute path for the `CMAKE_PREFIX_PATH`.
