@@ -19,9 +19,7 @@ void getHostname(char machineName[150]) {
     DWORD bufCharCount = 150;
     memset(Name, 0, 150);
     if (GetComputerName(infoBuf, &bufCharCount)) {
-        for (size_t i = 0; i < 150; i++) {
-            Name[i] = infoBuf[i];
-        }
+        for (size_t i = 0; i < 150; i++) { Name[i] = infoBuf[i]; }
     } else {
         strcpy(Name, "Unknown_Host_Name");
     }
@@ -32,7 +30,8 @@ void getHostname(char machineName[150]) {
     strncpy(machineName, Name, 150);
 }
 
-ApplicationHostname::ApplicationHostname(std::string_view parameters, std::string_view constraints) : Strategy("applicationHostname", constraints) {
+ApplicationHostname::ApplicationHostname(std::string_view parameters, std::string_view constraints)
+    : Strategy("applicationHostname", constraints) {
     auto applicationHostname_json = nlohmann::json::parse(parameters);
     const std::string delimiter = ",";
     std::stringstream sstream(applicationHostname_json["hostNames"].get<std::string>());
@@ -46,8 +45,9 @@ ApplicationHostname::ApplicationHostname(std::string_view parameters, std::strin
 bool ApplicationHostname::isEnabled(const Context &context) {
     char hostnameC[150];
     getHostname(hostnameC);
-    std::string hostname{hostnameC};
-    if (std::find(m_applicationHostnames.begin(), m_applicationHostnames.end(), hostname) != m_applicationHostnames.end())
+
+    if (std::string hostname{hostnameC}; std::find(m_applicationHostnames.begin(), m_applicationHostnames.end(),
+                                                   hostname) != m_applicationHostnames.end())
         return true;
     return false;
 }

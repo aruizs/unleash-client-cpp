@@ -3,7 +3,8 @@
 #include <sstream>
 
 namespace unleash {
-RemoteAddress::RemoteAddress(std::string_view parameters, std::string_view constraints) : Strategy("remoteAddress", constraints) {
+RemoteAddress::RemoteAddress(std::string_view parameters, std::string_view constraints)
+    : Strategy("remoteAddress", constraints) {
     auto remoteAddress_json = nlohmann::json::parse(parameters);
     const std::string delimiter = ",";
     std::stringstream sstream(remoteAddress_json["IPs"].get<std::string>());
@@ -15,8 +16,7 @@ RemoteAddress::RemoteAddress(std::string_view parameters, std::string_view const
 }
 
 bool RemoteAddress::isEnabled(const Context &context) {
-    if (std::find(m_ips.begin(), m_ips.end(), context.remoteAddress) != m_ips.end())
-        return true;
+    if (std::find(m_ips.begin(), m_ips.end(), context.remoteAddress) != m_ips.end()) return true;
     return false;
 }
 }  // namespace unleash

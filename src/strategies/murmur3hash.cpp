@@ -34,13 +34,9 @@
 
 namespace unleash {
 
-inline uint32_t rotl32(uint32_t x, int8_t r) {
-    return (x << r) | (x >> (32 - r));
-}
+inline uint32_t rotl32(uint32_t x, int8_t r) { return (x << r) | (x >> (32 - r)); }
 
-inline uint64_t rotl64(uint64_t x, int8_t r) {
-    return (x << r) | (x >> (64 - r));
-}
+inline uint64_t rotl64(uint64_t x, int8_t r) { return (x << r) | (x >> (64 - r)); }
 }  // namespace unleash
 
 #define ROTL32(x, y) rotl32(x, y)
@@ -56,13 +52,9 @@ inline uint64_t rotl64(uint64_t x, int8_t r) {
 
 namespace unleash {
 
-FORCE_INLINE uint32_t getblock32(const uint32_t *p, int i) {
-    return p[i];
-}
+FORCE_INLINE uint32_t getblock32(const uint32_t *p, int i) { return p[i]; }
 
-FORCE_INLINE uint64_t getblock64(const uint64_t *p, int i) {
-    return p[i];
-}
+FORCE_INLINE uint64_t getblock64(const uint64_t *p, int i) { return p[i]; }
 
 //-----------------------------------------------------------------------------
 // Finalization mix - force all bits of a hash block to avalanche
@@ -91,8 +83,7 @@ FORCE_INLINE uint64_t fmix64(uint64_t k) {
 
 //-----------------------------------------------------------------------------
 
-void murmurHash3X8632(const void *key, int len,
-                      uint32_t seed, void *out) {
+void murmurHash3X8632(const void *key, int len, uint32_t seed, void *out) {
     const uint8_t *data = (const uint8_t *) key;
     const int nblocks = len / 4;
 

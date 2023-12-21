@@ -1,9 +1,9 @@
 #ifndef UNLEASH_FEATURE_H
 #define UNLEASH_FEATURE_H
 #include "unleash/strategies/strategy.h"
+#include <memory>
 #include <string>
 #include <vector>
-#include <memory>
 
 namespace unleash {
 class Context;

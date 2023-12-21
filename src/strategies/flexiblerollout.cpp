@@ -4,10 +4,13 @@
 #include <random>
 
 namespace unleash {
-FlexibleRollout::FlexibleRollout(std::string_view parameters, std::string_view constraints) : Strategy("flexibleRollout", constraints) {
+FlexibleRollout::FlexibleRollout(std::string_view parameters, std::string_view constraints)
+    : Strategy("flexibleRollout", constraints) {
     auto flexibleRollout_json = nlohmann::json::parse(parameters);
     m_groupId = flexibleRollout_json["groupId"].get<std::string>();
-    m_rollout = (flexibleRollout_json["rollout"].type() == nlohmann::json::value_t::string) ? std::stoi(flexibleRollout_json["rollout"].get<std::string>()) : uint32_t(flexibleRollout_json["rollout"]);
+    m_rollout = (flexibleRollout_json["rollout"].type() == nlohmann::json::value_t::string)
+                        ? std::stoi(flexibleRollout_json["rollout"].get<std::string>())
+                        : uint32_t(flexibleRollout_json["rollout"]);
     m_stickiness = flexibleRollout_json["stickiness"].get<std::string>();
 }
 
@@ -15,16 +18,14 @@ bool FlexibleRollout::isEnabled(const Context &context) {
     auto stickinessConfiguration = m_stickiness;
     // Choose strategy configuration
     if (stickinessConfiguration == "default") {
-        if (!context.userId.empty())
-            stickinessConfiguration = "userId";
+        if (!context.userId.empty()) stickinessConfiguration = "userId";
         else if (!context.sessionId.empty())
             stickinessConfiguration = "sessionId";
         else
             stickinessConfiguration = "random";
     }
     if (stickinessConfiguration == "userId") {
-        if (context.userId.empty())
-            return false;
+        if (context.userId.empty()) return false;
         return normalizedMurmur3(m_groupId + ":" + context.userId) <= m_rollout;
     } else if (stickinessConfiguration == "sessionId") {
         return normalizedMurmur3(m_groupId + ":" + context.sessionId) <= m_rollout;
