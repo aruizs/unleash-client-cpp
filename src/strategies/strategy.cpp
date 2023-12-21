@@ -17,7 +17,8 @@ Strategy::Strategy(std::string name, std::string_view constraints) : m_name(std:
     if (!constraints.empty()) {
         auto constraint_json = nlohmann::json::parse(constraints);
         for (const auto &[key, value] : constraint_json.items()) {
-            if ((value.contains("contextName") && value.contains("operator") && value.contains("values")) && (value["operator"] == "IN" || value["operator"] == "NOT_IN")) {
+            if ((value.contains("contextName") && value.contains("operator") && value.contains("values")) &&
+                (value["operator"] == "IN" || value["operator"] == "NOT_IN")) {
                 Constraint strategyConstraint{value["contextName"], value["operator"]};
                 for (const auto &[valuesKey, valuesValue] : value["values"].items()) {
                     strategyConstraint.values.push_back(valuesValue);
@@ -28,9 +29,9 @@ Strategy::Strategy(std::string name, std::string_view constraints) : m_name(std:
     }
 }
 
-std::unique_ptr<Strategy> Strategy::createStrategy(std::string_view strategy, std::string_view parameters, std::string_view constraints) {
-    if (strategy == "default")
-        return std::make_unique<Default>(parameters, constraints);
+std::unique_ptr<Strategy> Strategy::createStrategy(std::string_view strategy, std::string_view parameters,
+                                                   std::string_view constraints) {
+    if (strategy == "default") return std::make_unique<Default>(parameters, constraints);
     else if (strategy == "userWithId")
         return std::make_unique<UserWithId>(parameters, constraints);
     else if (strategy == "applicationHostname")
@@ -49,26 +50,29 @@ std::unique_ptr<Strategy> Strategy::createStrategy(std::string_view strategy, st
 }
 
 bool Strategy::meetConstraints(const Context &context) const {
-    if (m_constraints.empty())
-        return true;
-    return (std::all_of(m_constraints.cbegin(), m_constraints.cend(), [&](const auto &constraintItem) { return checkContextConstraint(context, constraintItem); }));
+    if (m_constraints.empty()) return true;
+    return (std::all_of(m_constraints.cbegin(), m_constraints.cend(),
+                        [&](const auto &constraintItem) { return checkContextConstraint(context, constraintItem); }));
 }
 
 bool Strategy::checkContextConstraint(const Context &context, const Constraint &constraint) const {
     bool inCondition = (constraint.constraintOperator == "IN");
     bool contextIn = false;
     if (constraint.contextName == "environment") {
-        contextIn = (std::find(constraint.values.begin(), constraint.values.end(), context.environment) != constraint.values.end());
+        contextIn = (std::find(constraint.values.begin(), constraint.values.end(), context.environment) !=
+                     constraint.values.end());
     } else if (constraint.contextName == "appName") {
-        contextIn = (std::find(constraint.values.begin(), constraint.values.end(), context.appName) != constraint.values.end());
+        contextIn = (std::find(constraint.values.begin(), constraint.values.end(), context.appName) !=
+                     constraint.values.end());
     } else if (constraint.contextName == "userId") {
-        contextIn = (std::find(constraint.values.begin(), constraint.values.end(), context.userId) != constraint.values.end());
+        contextIn = (std::find(constraint.values.begin(), constraint.values.end(), context.userId) !=
+                     constraint.values.end());
     } else if (context.properties.find(constraint.contextName) != context.properties.end()) {
-        contextIn = (std::find(constraint.values.begin(), constraint.values.end(), context.properties.at(constraint.contextName)) != constraint.values.end());
+        contextIn = (std::find(constraint.values.begin(), constraint.values.end(),
+                               context.properties.at(constraint.contextName)) != constraint.values.end());
     }
 
-    if (contextIn == inCondition)
-        return true;
+    if (contextIn == inCondition) return true;
 
     return false;
 }

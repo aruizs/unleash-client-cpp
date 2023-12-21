@@ -3,7 +3,8 @@
 #include <sstream>
 
 namespace unleash {
-UserWithId::UserWithId(std::string_view parameters, std::string_view constraints) : Strategy("userWithId", constraints) {
+UserWithId::UserWithId(std::string_view parameters, std::string_view constraints)
+    : Strategy("userWithId", constraints) {
     auto usersId_json = nlohmann::json::parse(parameters);
     const std::string delimiter = ",";
     std::stringstream sstream(usersId_json["userIds"].get<std::string>());
