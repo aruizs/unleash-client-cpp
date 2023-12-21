@@ -16,14 +16,17 @@ using ::testing::Return;
 class ApiClientMock : public unleash::ApiClient {
 public:
     MOCK_METHOD(std::string, features, (), (override));
+    MOCK_METHOD(bool, registration, (unsigned int), (override));
 };
 
 using TestParam = std::pair<std::string, std::string>;
 
-std::vector<TestParam> readSpecificationTestFromDisk(const std::string &testPath) {
+std::vector<TestParam>
+readSpecificationTestFromDisk(const std::string &testPath) {
     std::vector<TestParam> values;
     if (testPath.empty()) {
-        std::cout << "No test path found. Current path: " << std::filesystem::current_path() << std::endl;
+        std::cout << "No test path found. Current path: "
+                  << std::filesystem::current_path() << std::endl;
         return values;
     }
     // Read index file
@@ -40,7 +43,8 @@ std::vector<TestParam> readSpecificationTestFromDisk(const std::string &testPath
             std::ifstream testFile(testPath + element.get<std::string>());
             nlohmann::json testJson;
             testFile >> testJson;
-            values.push_back(std::pair(testJson["state"].dump(), testJson["tests"].dump()));
+            values.push_back(std::pair(testJson["state"].dump(),
+                                       testJson["tests"].dump()));
         }
     }
     return values;
@@ -56,21 +60,42 @@ std::string getTestPath() {
 class UnleashSpecificationTest : public testing::TestWithParam<TestParam> {};
 
 TEST(UnleashTest, InicializationBadServerUrl) {
-    unleash::UnleashClient unleashClient = unleash::UnleashClient::create("production", "urlMock");
+    unleash::UnleashClient unleashClient =
+            unleash::UnleashClient::create("production", "urlMock");
     std::cout << unleashClient << std::endl;
     unleashClient.initializeClient();
     EXPECT_FALSE(unleashClient.isEnabled("feature.toogle"));
 }
 
 TEST(UnleashTest, InicializationErrorServerResponse) {
-    unleash::UnleashClient unleashClient = unleash::UnleashClient::create("production", "https://www.apple.com/%");
+    unleash::UnleashClient unleashClient = unleash::UnleashClient::create(
+            "production", "https://www.apple.com/%");
+    unleashClient.initializeClient();
+    EXPECT_FALSE(unleashClient.isEnabled("feature.toogle"));
+}
+
+TEST(UnleashTest, RegistrationBadServerUrl) {
+    unleash::UnleashClient unleashClient =
+            unleash::UnleashClient::create("production", "urlMock")
+                    .registration(true);
+    std::cout << unleashClient << std::endl;
+    unleashClient.initializeClient();
+    EXPECT_FALSE(unleashClient.isEnabled("feature.toogle"));
+}
+
+TEST(UnleashTest, RegistrationErrorServerResponse) {
+    unleash::UnleashClient unleashClient =
+            unleash::UnleashClient::create("production",
+                                           "https://www.apple.com/%")
+                    .registration(true);
     unleashClient.initializeClient();
     EXPECT_FALSE(unleashClient.isEnabled("feature.toogle"));
 }
 
 TEST(UnleashTest, ApplicationHostname) {
     const std::string parameters = "{\"hostNames\": \"testHostname\"}";
-    auto appHost = unleash::Strategy::createStrategy("applicationHostname", parameters);
+    auto appHost = unleash::Strategy::createStrategy("applicationHostname",
+                                                     parameters);
     unleash::Context context;
     EXPECT_FALSE(appHost->isEnabled(context));
 }
@@ -78,22 +103,40 @@ TEST(UnleashTest, ApplicationHostname) {
 TEST_P(UnleashSpecificationTest, TestSet) {
     auto testData = GetParam();
     auto apiMock = std::make_shared<ApiClientMock>();
-    unleash::UnleashClient unleashClient = unleash::UnleashClient::create("production", "urlMock").instanceId("intanceId").environment("production").apiClient(apiMock).refreshInterval(1).authentication("clientToken");
+    constexpr unsigned int refreshInterval = 500;
+    unleash::UnleashClient unleashClient =
+            unleash::UnleashClient::create("production", "urlMock")
+                    .instanceId("intanceId")
+                    .environment("production")
+                    .apiClient(apiMock)
+                    .refreshInterval(refreshInterval)
+                    .authentication("clientToken")
+                    .registration(true);
     EXPECT_CALL(*apiMock, features()).WillRepeatedly(Return(testData.first));
+    EXPECT_CALL(*apiMock, registration(refreshInterval))
+            .WillRepeatedly(Return(true));
     unleashClient.initializeClient();
     nlohmann::json testSet = nlohmann::json::parse(testData.second);
-    unleashClient.initializeClient();  // Retry initialization to check nothing happens
+    unleashClient
+            .initializeClient();  // Retry initialization to check nothing happens
     for (const auto &[key, value] : testSet.items()) {
         auto contextJson = value["context"];
-        unleash::Context testContext{
-                contextJson.value("userId", ""), contextJson.value("sessionId", ""), contextJson.value("remoteAddress", ""), contextJson.value("environment", ""), contextJson.value("appName", "")};
+        unleash::Context testContext{contextJson.value("userId", ""),
+                                     contextJson.value("sessionId", ""),
+                                     contextJson.value("remoteAddress", ""),
+                                     contextJson.value("environment", ""),
+                                     contextJson.value("appName", "")};
         if (contextJson.contains("properties")) {
-            for (auto &[propertyKey, propertyValue] : contextJson["properties"].items()) {
+            for (auto &[propertyKey, propertyValue] :
+                 contextJson["properties"].items()) {
                 testContext.properties.try_emplace(propertyKey, propertyValue);
             }
         }
-        EXPECT_EQ(unleashClient.isEnabled(value["toggleName"], testContext), value["expectedResult"].get<bool>());
+        EXPECT_EQ(unleashClient.isEnabled(value["toggleName"], testContext),
+                  value["expectedResult"].get<bool>());
     }
 }
 
-INSTANTIATE_TEST_SUITE_P(AllSpecificationFiles, UnleashSpecificationTest, testing::ValuesIn(readSpecificationTestFromDisk(getTestPath())));
+INSTANTIATE_TEST_SUITE_P(
+        AllSpecificationFiles, UnleashSpecificationTest,
+        testing::ValuesIn(readSpecificationTestFromDisk(getTestPath())));

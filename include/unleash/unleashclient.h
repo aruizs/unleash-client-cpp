@@ -38,6 +38,7 @@ private:
     std::string m_instanceId;
     std::string m_environment;
     std::string m_authentication;
+    bool m_registration = false;
     unsigned int m_refreshInterval = 15000;
     std::thread m_thread;
     bool m_stopThread = false;
@@ -60,6 +61,7 @@ public:
     UnleashClientBuilder &refreshInterval(unsigned int refreshInterval);
     UnleashClientBuilder &apiClient(std::shared_ptr<ApiClient> apiClient);
     UnleashClientBuilder &authentication(std::string authentication);
+    UnleashClientBuilder &registration(bool registration);
 
 private:
     UnleashClient unleashClient;

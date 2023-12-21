@@ -19,7 +19,7 @@ The below table shows what features the SDKs support or plan to support.
 - [x] Built-in strategies
 - [x] Unleash context
 - [x] Strategy constrains
-- [ ] Application registration
+- [x] Application registration
 - [ ] Usage Metrics
 - [ ] Variants
 - [ ] Custom stickiness
@@ -39,16 +39,17 @@ The below table shows what features the SDKs support or plan to support.
 The `unleashClient` can be initialized with the following parameters but only `appName` and `unleashServerUrl` are
 mandatories.
 
-| Config      | Required? | Type | Default value |
-|-------------|-----------| ---- |---------------|
-| Unleash URL | Yes | String | N/A |
-| App. Name   | Yes | String | N/A |
-| Instance ID. | No        | String | N/A |
-| Environment | No        | String | N/A |
-| Authentication | No        | String | N/A |
-| Refresh Interval (ms) | No        | Int | 15000 |
+| Config                | Required? | Type   | Default value |
+|-----------------------|-----------|--------|---------------|
+| Unleash URL           | Yes | String | N/A           |
+| App. Name             | Yes | String | N/A           |
+| Instance ID.          | No        | String | N/A           |
+| Environment           | No        | String | N/A           |
+| Authentication        | No        | String | N/A           |
+| Refresh Interval (ms) | No        | Int    | 15000         |
+| Registration          | No        | Bool   | False         |
 
-    unleash::UnleashClient unleashClient = unleash::UnleashClient::create("appName", "unleashServerUrl").instanceId("intanceId").environment("environment").authentication("token).refreshInterval("pollingTime");
+    unleash::UnleashClient unleashClient = unleash::UnleashClient::create("appName", "unleashServerUrl").instanceId("intanceId").environment("environment").authentication("token").refreshInterval(pollingTime).registration(boolValue);
     unleashClient.initializeClient();
 
 ### Feature Flag is enabled?
