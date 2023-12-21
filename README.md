@@ -20,8 +20,8 @@ The below table shows what features the SDKs support or plan to support.
 - [x] Unleash context
 - [x] Strategy constrains
 - [x] Application registration
+- [ ] Variants (WIP)
 - [ ] Usage Metrics
-- [ ] Variants
 - [ ] Custom stickiness
 
 ## Requirements
@@ -115,3 +115,4 @@ Thanks a lot to the following tools for your contribution:
 - [CMake](https://cmake.org/) for the C++ build system.
 - [Conan.io](https://conan.io/) for the C++ package manager.
 - [GitHub](https://github.com/) for the repository and CI/CD services.
+- [GoogleTest](https://github.com/google/googletest) for C++ testing.
