@@ -19,7 +19,7 @@ public:
     MOCK_METHOD(bool, registration, (unsigned int), (override));
 };
 
-using TestParam = std::pair<std::string, std::string>;
+using TestParam = std::tuple<std::string, std::string, bool>;
 
 std::vector<TestParam> readSpecificationTestFromDisk(const std::string &testPath) {
     std::vector<TestParam> values;
@@ -41,7 +41,10 @@ std::vector<TestParam> readSpecificationTestFromDisk(const std::string &testPath
             std::ifstream testFile(testPath + element.get<std::string>());
             nlohmann::json testJson;
             testFile >> testJson;
-            values.push_back(std::pair(testJson["state"].dump(), testJson["tests"].dump()));
+            if (testJson.contains("tests"))
+                values.push_back(std::make_tuple(testJson["state"].dump(), testJson["tests"].dump(), false));
+            else if (testJson.contains("variantTests"))
+                values.push_back(std::make_tuple(testJson["state"].dump(), testJson["variantTests"].dump(), true));
         }
     }
     return values;
@@ -101,10 +104,10 @@ TEST_P(UnleashSpecificationTest, TestSet) {
                                                    .refreshInterval(refreshInterval)
                                                    .authentication("clientToken")
                                                    .registration(true);
-    EXPECT_CALL(*apiMock, features()).WillRepeatedly(Return(testData.first));
+    EXPECT_CALL(*apiMock, features()).WillRepeatedly(Return(std::get<0>(testData)));
     EXPECT_CALL(*apiMock, registration(refreshInterval)).WillRepeatedly(Return(true));
     unleashClient.initializeClient();
-    nlohmann::json testSet = nlohmann::json::parse(testData.second);
+    nlohmann::json testSet = nlohmann::json::parse(std::get<1>(testData));
     unleashClient.initializeClient();  // Retry initialization to check nothing happens
     for (const auto &[key, value] : testSet.items()) {
         auto contextJson = value["context"];
@@ -116,7 +119,17 @@ TEST_P(UnleashSpecificationTest, TestSet) {
                 testContext.properties.try_emplace(propertyKey, propertyValue);
             }
         }
-        EXPECT_EQ(unleashClient.isEnabled(value["toggleName"], testContext), value["expectedResult"].get<bool>());
+        if (!std::get<2>(testData)) {
+            EXPECT_EQ(unleashClient.isEnabled(value["toggleName"], testContext), value["expectedResult"].get<bool>());
+        } else {
+            std::cout << value["toggleName"] << std::endl;
+            nlohmann::json expectedResult = value["expectedResult"];
+            auto variant = unleashClient.variant(value["toggleName"], testContext);
+            EXPECT_EQ(expectedResult["feature_enabled"], variant.feature_enabled);
+            EXPECT_EQ(expectedResult["enabled"], variant.enabled);
+            EXPECT_EQ(expectedResult["name"], variant.name);
+            if (expectedResult.contains("payload")) EXPECT_EQ(expectedResult["payload"].dump(), variant.payload);
+        }
     }
 }
 

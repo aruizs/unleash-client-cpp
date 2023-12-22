@@ -1,4 +1,5 @@
-#include "unleash/strategies/murmur3hash.h"
+#include "unleash/utils/murmur3hash.h"
+#include <iostream>
 
 //-----------------------------------------------------------------------------
 // MurmurHash3 was written by Austin Appleby, and is placed in the public
@@ -69,22 +70,11 @@ FORCE_INLINE uint32_t fmix32(uint32_t h) {
     return h;
 }
 
-//----------
-
-FORCE_INLINE uint64_t fmix64(uint64_t k) {
-    k ^= k >> 33;
-    k *= BIG_CONSTANT(0xff51afd7ed558ccd);
-    k ^= k >> 33;
-    k *= BIG_CONSTANT(0xc4ceb9fe1a85ec53);
-    k ^= k >> 33;
-
-    return k;
-}
 
 //-----------------------------------------------------------------------------
 
 void murmurHash3X8632(const void *key, int len, uint32_t seed, void *out) {
-    const uint8_t *data = (const uint8_t *) key;
+    const auto *data = (const uint8_t *) key;
     const int nblocks = len / 4;
 
     uint32_t h1 = seed;
@@ -95,7 +85,7 @@ void murmurHash3X8632(const void *key, int len, uint32_t seed, void *out) {
     //----------
     // body
 
-    const uint32_t *blocks = (const uint32_t *) (data + nblocks * 4);
+    const auto *blocks = (const uint32_t *) (data + nblocks * 4);
 
     for (int i = -nblocks; i; i++) {
         uint32_t k1 = getblock32(blocks, i);
@@ -112,7 +102,7 @@ void murmurHash3X8632(const void *key, int len, uint32_t seed, void *out) {
     //----------
     // tail
 
-    const uint8_t *tail = (const uint8_t *) (data + nblocks * 4);
+    const auto *tail = data + nblocks * 4;
 
     uint32_t k1 = 0;
 
@@ -127,7 +117,7 @@ void murmurHash3X8632(const void *key, int len, uint32_t seed, void *out) {
             k1 = ROTL32(k1, 15);
             k1 *= c2;
             h1 ^= k1;
-    };
+    }
 
     //----------
     // finalization
@@ -139,10 +129,10 @@ void murmurHash3X8632(const void *key, int len, uint32_t seed, void *out) {
     *(uint32_t *) out = h1;
 }
 
-uint32_t normalizedMurmur3(const std::string &key, uint32_t seed) {
+uint32_t normalizedMurmur3(const std::string &key, uint32_t modulus, uint32_t seed) {
     uint32_t murmur3Hash;
-    murmurHash3X8632(key.c_str(), key.length(), seed, &murmur3Hash);
-    murmur3Hash %= 100;
+    murmurHash3X8632(key.c_str(), static_cast<int>(key.length()), seed, &murmur3Hash);
+    murmur3Hash %= modulus;
     murmur3Hash += 1;
     return murmur3Hash;
 }
