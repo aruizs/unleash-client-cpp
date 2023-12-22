@@ -20,7 +20,7 @@ The below table shows what features the SDKs support or plan to support.
 - [x] Unleash context
 - [x] Strategy constrains
 - [x] Application registration
-- [ ] Variants (WIP)
+- [x] Variants
 - [ ] Usage Metrics
 - [ ] Custom stickiness
 
@@ -68,6 +68,29 @@ unleashClient.isEnabled("feature.toogle");
     unleash::Context context{"userId", "sessionId", "remoteAddress"}
     unleashClient.isEnabled("feature.toogle", context);
 ```
+
+### Getting a Variant
+
+``` 
+    #include "unleash/context.h"
+    ...
+    unleash::Context context{"userId"};
+    auto variant = unleashClient.variant("feature.toogle", context);
+    ...
+    /*
+    The variant response is an instance of the following structure:
+    {
+      std::string name;
+      unsigned int weight;
+      bool enabled;
+      bool feature_enabled;
+      std::string payload;
+    }
+    */
+```
+
+For more information about variants, see the [Variant documentation](https://docs.getunleash.io/advanced/toggle_variants).
+
 
 ## Integration
 

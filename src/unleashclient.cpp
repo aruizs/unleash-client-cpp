@@ -110,20 +110,50 @@ bool UnleashClient::isEnabled(const std::string &flag, const Context &context) {
     return false;
 }
 
+variant_t UnleashClient::variant(const std::string &flag, const unleash::Context &context) {
+    variant_t variant{"disabled", 0, false, false};
+    if (m_isInitialized) {
+        variant.feature_enabled = isEnabled(flag, context);
+        if (auto search = m_features.find(flag); search != m_features.end()) {
+            std::cout << "variant" << std::endl;
+            return m_features.at(flag).getVariant(context);
+        }
+    }
+    return variant;
+}
+
 UnleashClient::featuresMap_t UnleashClient::loadFeatures(std::string_view features) const {
     const auto featuresJson = nlohmann::json::parse(features);
     featuresMap_t featuresMap;
     for (const auto &[key, value] : featuresJson["features"].items()) {
-        std::vector<std::unique_ptr<Strategy>> m_strategies;
+        // Load strategies
+        std::vector<std::unique_ptr<Strategy>> strategies;
         for (const auto &[strategyKey, strategyValue] : value["strategies"].items()) {
             std::string strategyParameters;
             if (strategyValue.contains("parameters")) strategyParameters = strategyValue["parameters"].dump();
             std::string strategyConstraints;
             if (strategyValue.contains("constraints")) { strategyConstraints = strategyValue["constraints"].dump(); }
-            m_strategies.push_back(Strategy::createStrategy(strategyValue["name"].get<std::string>(),
-                                                            strategyParameters, strategyConstraints));
+            strategies.push_back(Strategy::createStrategy(strategyValue["name"].get<std::string>(), strategyParameters,
+                                                          strategyConstraints));
         }
-        featuresMap.try_emplace(value["name"], value["name"], std::move(m_strategies), value["enabled"]);
+        Feature newFeature(value["name"], std::move(strategies), value["enabled"]);
+        // Load variants
+        std::pair<std::vector<std::unique_ptr<Variant>>, unsigned int> variants;
+        if (value.contains("variants")) {
+            unsigned int totalWeight = 0;
+            for (const auto &[variantKey, variantValue] : value["variants"].items()) {
+                std::string variantPayload;
+                if (variantValue.contains("payload")) variantPayload = variantValue["payload"].dump();
+                std::string variantOverrides;
+                if (variantValue.contains("overrides")) variantOverrides = variantValue["overrides"].dump();
+                variants.first.push_back(std::make_unique<Variant>(variantValue["name"], variantValue["weight"],
+                                                                   variantPayload, variantOverrides));
+                totalWeight += variantValue["weight"].get<unsigned int>();
+            }
+            variants.second = totalWeight;
+            newFeature.setVariants(std::move(variants));
+        }
+        featuresMap.try_emplace(value["name"], std::move(newFeature));
     }
     return featuresMap;
 }

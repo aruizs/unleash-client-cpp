@@ -1,5 +1,5 @@
 #include "unleash/strategies/flexiblerollout.h"
-#include "unleash/strategies/murmur3hash.h"
+#include "unleash/utils/murmur3hash.h"
 #include <nlohmann/json.hpp>
 #include <random>
 

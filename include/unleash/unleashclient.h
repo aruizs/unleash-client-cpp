@@ -14,6 +14,7 @@ namespace unleash {
 
 class UnleashClientBuilder;
 class Context;
+struct variant_t;
 
 class UNLEASH_EXPORT UnleashClient {
 public:
@@ -27,6 +28,8 @@ public:
     void initializeClient();
     bool isEnabled(const std::string &flag);
     bool isEnabled(const std::string &flag, const Context &context);
+    variant_t variant(const std::string &flag, const Context &context);
+
 
 private:
     UnleashClient(std::string name, std::string url);

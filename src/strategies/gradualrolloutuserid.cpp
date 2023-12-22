@@ -1,5 +1,5 @@
 #include "unleash/strategies/gradualrolloutuserid.h"
-#include "unleash/strategies/murmur3hash.h"
+#include "unleash/utils/murmur3hash.h"
 #include <nlohmann/json.hpp>
 
 namespace unleash {
