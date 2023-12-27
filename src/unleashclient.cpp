@@ -115,7 +115,6 @@ variant_t UnleashClient::variant(const std::string &flag, const unleash::Context
     if (m_isInitialized) {
         variant.feature_enabled = isEnabled(flag, context);
         if (auto search = m_features.find(flag); search != m_features.end()) {
-            std::cout << "variant" << std::endl;
             return m_features.at(flag).getVariant(context);
         }
     }
