@@ -3,6 +3,7 @@
 #include <nlohmann/json.hpp>
 #include <random>
 
+
 namespace unleash {
 FlexibleRollout::FlexibleRollout(std::string_view parameters, std::string_view constraints)
     : Strategy("flexibleRollout", constraints) {
@@ -34,6 +35,10 @@ bool FlexibleRollout::isEnabled(const Context &context) {
         std::mt19937 rng(dev());
         std::uniform_int_distribution<std::mt19937::result_type> dist6(1, 100);
         return dist6(rng) <= m_rollout;
+    } else {
+        auto customFieldIt = context.properties.find(stickinessConfiguration);
+        if (customFieldIt == context.properties.end()) return false;
+        return normalizedMurmur3(m_groupId + ":" + customFieldIt->second) <= m_rollout;
     }
     return false;
 }
