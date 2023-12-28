@@ -2,6 +2,8 @@
 #include "unleash/api/cprclient.h"
 #include "unleash/strategies/strategy.h"
 #include <nlohmann/json.hpp>
+#include <fstream>
+#include <sstream>
 
 namespace unleash {
 
@@ -45,6 +47,11 @@ UnleashClientBuilder &UnleashClientBuilder::registration(bool registration) {
     return *this;
 }
 
+UnleashClientBuilder &UnleashClientBuilder::cacheFilePath(std::string cacheFilePath) {
+    unleashClient.m_cacheFilePath = std::move(cacheFilePath);
+    return *this;
+}
+
 void UnleashClient::initializeClient() {
     if (!m_isInitialized) {
         // Set-up Unleash API client
@@ -61,12 +68,20 @@ void UnleashClient::initializeClient() {
         // Initial fetch of feature flags
         auto apiFeatures = m_apiClient->features();
         if (apiFeatures.empty()) {
-            std::cerr << "Attempted to initialize an Unleash Client instance "
-                         "without server response."
-                      << std::endl;
-            return;
+            std::cerr << "Attempted to initialize an Unleash Client instance without server response." << std::endl;
+
+            std::ifstream cacheFile(m_cacheFilePath, std::fstream::in);
+            if (cacheFile.is_open()){
+                std::cout << "Reading configuration from cached file " << m_cacheFilePath << std::endl;
+                std::stringstream features_buffer;
+                features_buffer << cacheFile.rdbuf();
+                cacheFile.close();
+                m_features = loadFeatures(features_buffer.str());
+            } else 
+                std::cout << "Could not open cache file '" << m_cacheFilePath << "' for reading." << std::endl;
+        } else {
+            m_features = loadFeatures(apiFeatures);
         }
-        m_features = loadFeatures(apiFeatures);
         m_thread = std::thread(&UnleashClient::periodicTask, this);
         m_isInitialized = true;
     } else {
@@ -85,8 +100,24 @@ void UnleashClient::periodicTask() {
         globalTimer += k_pollInterval;
         if (globalTimer >= m_refreshInterval) {
             globalTimer = 0;
+            
             auto features_response = m_apiClient->features();
-            if (!features_response.empty()) m_features = loadFeatures(features_response);
+            if (!features_response.empty()){
+                std::ofstream cacheFile(m_cacheFilePath);
+                if (cacheFile.is_open())
+                    cacheFile << features_response;
+                cacheFile.close();
+                m_features = loadFeatures(features_response);
+            } else {
+                std::ifstream cacheFile(m_cacheFilePath);
+                if(cacheFile.is_open()){
+                    std::stringstream features_buffer;
+                    features_buffer << cacheFile.rdbuf();
+                    cacheFile.close();
+                    m_features = loadFeatures(features_buffer.str());
+
+                }
+            }
         }
     }
 }
