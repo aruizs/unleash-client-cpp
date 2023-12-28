@@ -69,7 +69,6 @@ void UnleashClient::initializeClient() {
         auto apiFeatures = m_apiClient->features();
         if (apiFeatures.empty()) {
             std::cerr << "Attempted to initialize an Unleash Client instance without server response." << std::endl;
-
             std::ifstream cacheFile(m_cacheFilePath, std::fstream::in);
             if (cacheFile.is_open()){
                 std::cout << "Reading configuration from cached file " << m_cacheFilePath << std::endl;
@@ -100,7 +99,6 @@ void UnleashClient::periodicTask() {
         globalTimer += k_pollInterval;
         if (globalTimer >= m_refreshInterval) {
             globalTimer = 0;
-            
             auto features_response = m_apiClient->features();
             if (!features_response.empty()){
                 std::ofstream cacheFile(m_cacheFilePath);
