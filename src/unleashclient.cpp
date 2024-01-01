@@ -113,7 +113,7 @@ bool UnleashClient::isEnabled(const std::string &flag, const Context &context) {
 variant_t UnleashClient::variant(const std::string &flag, const unleash::Context &context) {
     variant_t variant{"disabled", 0, false, false};
     if (m_isInitialized) {
-        variant.feature_enabled = isEnabled(flag, context);
+        variant.featureEnabled = isEnabled(flag, context);
         if (auto search = m_features.find(flag); search != m_features.end()) {
             return m_features.at(flag).getVariant(context);
         }
