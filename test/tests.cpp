@@ -125,7 +125,7 @@ TEST_P(UnleashSpecificationTest, TestSet) {
             std::cout << value["toggleName"] << std::endl;
             nlohmann::json expectedResult = value["expectedResult"];
             auto variant = unleashClient.variant(value["toggleName"], testContext);
-            EXPECT_EQ(expectedResult["feature_enabled"], variant.feature_enabled);
+            EXPECT_EQ(expectedResult["feature_enabled"], variant.featureEnabled);
             EXPECT_EQ(expectedResult["enabled"], variant.enabled);
             EXPECT_EQ(expectedResult["name"], variant.name);
             if (expectedResult.contains("payload")) EXPECT_EQ(expectedResult["payload"].dump(), variant.payload);

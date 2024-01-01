@@ -25,7 +25,7 @@ variant_t Feature::getVariant(const unleash::Context &context) const {
     variant_t variant{"disabled", 0, false, false};
     if (!isEnabled(context)) { return variant; }
 
-    variant.feature_enabled = true;
+    variant.featureEnabled = true;
     if (m_variants.first.empty()) { return variant; }
 
     variant.enabled = true;

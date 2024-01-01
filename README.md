@@ -83,7 +83,7 @@ unleashClient.isEnabled("feature.toogle");
       std::string name;
       unsigned int weight;
       bool enabled;
-      bool feature_enabled;
+      bool featureEnabled;
       std::string payload;
     }
     */
