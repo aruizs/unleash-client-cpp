@@ -13,7 +13,7 @@
 namespace unleash {
 
 class UnleashClientBuilder;
-class Context;
+struct Context;
 struct variant_t;
 
 class UNLEASH_EXPORT UnleashClient {
