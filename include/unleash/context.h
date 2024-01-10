@@ -4,7 +4,7 @@
 #include <string>
 
 namespace unleash {
-class Context {
+struct Context {
     std::string userId;
     std::string sessionId;
     std::string remoteAddress;

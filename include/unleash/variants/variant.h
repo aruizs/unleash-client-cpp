@@ -5,7 +5,7 @@
 
 namespace unleash {
 
-class Context;
+struct Context;
 
 struct Override {
     std::string contextName;
