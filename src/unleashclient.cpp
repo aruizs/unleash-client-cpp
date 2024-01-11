@@ -97,12 +97,14 @@ UnleashClient::~UnleashClient() {
 }
 
 std::vector<std::string> UnleashClient::featureFlags() const {
+    std::vector<std::string> featureFlags;
+    // test
     if (m_isInitialized) {
-        if (auto search = m_features.find(flag); search != m_features.end()) {
-            return m_features.at(flag).isEnabled(context);
+        for (auto it = m_features.begin(); it != m_features.end(); it++) {
+            featureFlags.push_back(it->first);
         }
     }
-    return featuresMap_t();
+    return featureFlags
 }
 
 bool UnleashClient::isEnabled(const std::string &flag) {
