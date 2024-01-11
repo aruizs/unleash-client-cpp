@@ -30,7 +30,7 @@ endif()
 # Create the main unleash library target
 add_subdirectory(src)
 
-if(ENABLE_TESTING)
+if(UNLEASH_ENABLE_TESTING)
   enable_testing()
   add_subdirectory(test)
 endif()
