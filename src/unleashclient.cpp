@@ -96,6 +96,15 @@ UnleashClient::~UnleashClient() {
     if (m_thread.joinable()) m_thread.join();
 }
 
+std::vector<std::string> UnleashClient::featureFlags() const {
+    if (m_isInitialized) {
+        if (auto search = m_features.find(flag); search != m_features.end()) {
+            return m_features.at(flag).isEnabled(context);
+        }
+    }
+    return featuresMap_t();
+}
+
 bool UnleashClient::isEnabled(const std::string &flag) {
     Context context;
     return isEnabled(flag, context);
