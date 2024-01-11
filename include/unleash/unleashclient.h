@@ -26,7 +26,6 @@ public:
     friend UNLEASH_EXPORT std::ostream &operator<<(std::ostream &os, const UnleashClient &obj);
     static UnleashClientBuilder create(std::string name, std::string url);
     void initializeClient();
-    // test
     std::vector<std::string> featureFlags() const;
     bool isEnabled(const std::string &flag);
     bool isEnabled(const std::string &flag, const Context &context);
