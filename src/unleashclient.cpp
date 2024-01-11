@@ -98,7 +98,6 @@ UnleashClient::~UnleashClient() {
 
 std::vector<std::string> UnleashClient::featureFlags() const {
     std::vector<std::string> featureFlags;
-    // test
     if (m_isInitialized) {
         for (auto it = m_features.begin(); it != m_features.end(); it++) {
             featureFlags.push_back(it->first);
