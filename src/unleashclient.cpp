@@ -103,7 +103,7 @@ std::vector<std::string> UnleashClient::featureFlags() const {
             featureFlags.push_back(it->first);
         }
     }
-    return featureFlags
+    return featureFlags;
 }
 
 bool UnleashClient::isEnabled(const std::string &flag) {
