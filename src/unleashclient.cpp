@@ -101,19 +101,19 @@ void UnleashClient::periodicTask() {
             globalTimer = 0;
             auto features_response = m_apiClient->features();
             if (!features_response.empty()){
-                std::ofstream cacheFile(m_cacheFilePath);
-                if (cacheFile.is_open())
-                    cacheFile << features_response;
-                cacheFile.close();
                 m_features = loadFeatures(features_response);
-            } else {
+                std::ofstream cacheFile(m_cacheFilePath);
+                if (cacheFile.is_open()){
+                    cacheFile << features_response;
+                    cacheFile.close();
+                }
+            } else if (m_features.empty()) {
                 std::ifstream cacheFile(m_cacheFilePath);
                 if(cacheFile.is_open()){
                     std::stringstream features_buffer;
                     features_buffer << cacheFile.rdbuf();
                     cacheFile.close();
                     m_features = loadFeatures(features_buffer.str());
-
                 }
             }
         }
