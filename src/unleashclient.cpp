@@ -103,9 +103,10 @@ void UnleashClient::periodicTask() {
             if (!features_response.empty()){
                 m_features = loadFeatures(features_response);
                 std::ofstream cacheFile(m_cacheFilePath);
-                if (cacheFile.is_open())
+                if (cacheFile.is_open()){
                     cacheFile << features_response;
-                cacheFile.close();
+                    cacheFile.close();
+                }
             } else if (m_features.empty()) {
                 std::ifstream cacheFile(m_cacheFilePath);
                 if(cacheFile.is_open()){
@@ -113,7 +114,6 @@ void UnleashClient::periodicTask() {
                     features_buffer << cacheFile.rdbuf();
                     cacheFile.close();
                     m_features = loadFeatures(features_buffer.str());
-
                 }
             }
         }
