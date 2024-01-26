@@ -6,7 +6,8 @@
 namespace unleash {
 class CprClient : public ApiClient {
 public:
-    CprClient(std::string url, std::string name, std::string instanceId, std::string authentication = std::string());
+    CprClient(std::string url, std::string name, std::string instanceId, std::string authentication = std::string(),
+              std::string caBuffer = std::string());
     std::string features() override;
     bool registration(unsigned int refreshInterval) override;
 
@@ -16,6 +17,7 @@ private:
     std::string m_instanceId;
     std::string m_name;
     std::string m_authentication;
+    std::string m_caBuffer;
 };
 }  // namespace unleash
 #endif  //UNLEASH_CPRCLIENT_H

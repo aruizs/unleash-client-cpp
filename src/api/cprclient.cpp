@@ -6,12 +6,15 @@
 #include <nlohmann/json.hpp>
 
 namespace unleash {
-CprClient::CprClient(std::string url, std::string name, std::string instanceId, std::string authentication)
+CprClient::CprClient(std::string url, std::string name, std::string instanceId, std::string authentication,
+                     std::string caBuffer)
     : m_url(std::move(url)), m_instanceId(std::move(instanceId)), m_name(std::move(name)),
-      m_authentication(std::move(authentication)) {}
+      m_authentication(std::move(authentication)), m_caBuffer(std::move(caBuffer)) {}
 
 std::string CprClient::features() {
-    auto sslOptions = cpr::Ssl(cpr::ssl::CaInfo{"assets:/cacerts.pem"});
+    cpr::SslOptions sslOptions;
+
+    if (!m_caBuffer.empty()) { sslOptions.ca_buffer = m_caBuffer; }
     auto response = cpr::Get(cpr::Url{m_url + "/client/features"},
                              cpr::Header{{"UNLEASH-INSTANCEID", m_instanceId},
                                          {"UNLEASH-APPNAME", m_name},
