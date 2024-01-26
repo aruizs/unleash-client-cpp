@@ -11,6 +11,7 @@ public:
     std::string features() override;
     bool registration(unsigned int refreshInterval) override;
 
+    void setCABuffer(std::string caBuffer) { m_caBuffer = caBuffer; };
 
 private:
     std::string m_url;
