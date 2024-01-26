@@ -10,6 +10,7 @@ public:
     std::string features() override;
     bool registration(unsigned int refreshInterval) override;
 
+
 private:
     std::string m_url;
     std::string m_instanceId;

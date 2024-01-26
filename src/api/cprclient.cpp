@@ -1,6 +1,7 @@
 #include "unleash/api/cprclient.h"
 #include <chrono>
 #include <cpr/cpr.h>
+#include <cpr/ssl_options.h>
 #include <iostream>
 #include <nlohmann/json.hpp>
 
@@ -10,9 +11,12 @@ CprClient::CprClient(std::string url, std::string name, std::string instanceId, 
       m_authentication(std::move(authentication)) {}
 
 std::string CprClient::features() {
-    auto response = cpr::Get(cpr::Url{m_url + "/client/features"}, cpr::Header{{"UNLEASH-INSTANCEID", m_instanceId},
-                                                                               {"UNLEASH-APPNAME", m_name},
-                                                                               {"Authorization", m_authentication}});
+    auto sslOptions = cpr::Ssl(cpr::ssl::CaInfo{"assets:/cacerts.pem"});
+    auto response = cpr::Get(cpr::Url{m_url + "/client/features"},
+                             cpr::Header{{"UNLEASH-INSTANCEID", m_instanceId},
+                                         {"UNLEASH-APPNAME", m_name},
+                                         {"Authorization", m_authentication}},
+                             sslOptions);
     if (response.status_code == 0) {
         std::cerr << response.error.message << std::endl;
         return std::string{};
