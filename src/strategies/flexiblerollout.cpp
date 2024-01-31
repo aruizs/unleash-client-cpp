@@ -27,19 +27,19 @@ bool FlexibleRollout::isEnabled(const Context &context) {
     }
     if (stickinessConfiguration == "userId") {
         if (context.userId.empty()) return false;
-        return normalizedMurmur3(m_groupId + ":" + context.userId) <= m_rollout;
+        if (normalizedMurmur3(m_groupId + ":" + context.userId) > m_rollout) return false;
     } else if (stickinessConfiguration == "sessionId") {
-        return normalizedMurmur3(m_groupId + ":" + context.sessionId) <= m_rollout;
+        if (normalizedMurmur3(m_groupId + ":" + context.sessionId) > m_rollout) return false;
     } else if (stickinessConfiguration == "random") {
         std::random_device dev;
         std::mt19937 rng(dev());
         std::uniform_int_distribution<std::mt19937::result_type> dist6(1, 100);
-        return dist6(rng) <= m_rollout;
+        if (dist6(rng) > m_rollout) return false;
     } else {
         auto customFieldIt = context.properties.find(stickinessConfiguration);
         if (customFieldIt == context.properties.end()) return false;
-        return normalizedMurmur3(m_groupId + ":" + customFieldIt->second) <= m_rollout;
+        if (normalizedMurmur3(m_groupId + ":" + customFieldIt->second) > m_rollout) return false;
     }
-    return false;
+    return meetConstraints(context);
 }
 }  // namespace unleash
