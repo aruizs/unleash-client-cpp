@@ -47,8 +47,8 @@ bool ApplicationHostname::isEnabled(const Context &context) {
     getHostname(hostnameC);
 
     if (std::string hostname{hostnameC}; std::find(m_applicationHostnames.begin(), m_applicationHostnames.end(),
-                                                   hostname) != m_applicationHostnames.end())
-        return true;
-    return false;
+                                                   hostname) == m_applicationHostnames.end())
+        return false;
+    return meetConstraints(context);
 }
 }  // namespace unleash
