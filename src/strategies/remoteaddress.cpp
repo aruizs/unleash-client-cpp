@@ -16,7 +16,7 @@ RemoteAddress::RemoteAddress(std::string_view parameters, std::string_view const
 }
 
 bool RemoteAddress::isEnabled(const Context &context) {
-    if (std::find(m_ips.begin(), m_ips.end(), context.remoteAddress) != m_ips.end()) return true;
-    return false;
+    if (std::find(m_ips.begin(), m_ips.end(), context.remoteAddress) == m_ips.end()) return false;
+    return meetConstraints(context);
 }
 }  // namespace unleash
