@@ -80,6 +80,11 @@ void UnleashClient::initializeClient() {
                 std::cout << "Could not open cache file '" << m_cacheFilePath << "' for reading." << std::endl;
         } else {
             m_features = loadFeatures(apiFeatures);
+            std::ofstream cacheFile(m_cacheFilePath);
+            if (cacheFile.is_open()){
+                cacheFile << apiFeatures;
+                cacheFile.close();
+            }
         }
         m_thread = std::thread(&UnleashClient::periodicTask, this);
         m_isInitialized = true;
