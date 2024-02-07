@@ -31,15 +31,18 @@ std::string CprClient::features() {
 }
 
 bool CprClient::registration(unsigned int refreshInterval) {
+    cpr::SslOptions sslOptions;
+
+    if (!m_caBuffer.empty()) { sslOptions.ca_buffer = m_caBuffer; }
     nlohmann::json payload;
     payload["appName"] = m_name;
     payload["interval"] = refreshInterval;
     payload["started"] = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
     payload["strategies"] = {"default", "userWithId", "flexibleRollout", "remoteAddress", "applicationHostname"};
 
-    if (auto response =
-                cpr::Post(cpr::Url{m_url + "/client/register"}, cpr::Body{payload.dump()},
-                          cpr::Header{{"Authorization", m_authentication}, {"Content-Type", "application/json"}});
+    if (auto response = cpr::Post(
+                cpr::Url{m_url + "/client/register"}, cpr::Body{payload.dump()},
+                cpr::Header{{"Authorization", m_authentication}, {"Content-Type", "application/json"}}, sslOptions);
         response.status_code == 0) {
         std::cerr << response.error.message << std::endl;
     } else if (response.status_code >= 400) {
