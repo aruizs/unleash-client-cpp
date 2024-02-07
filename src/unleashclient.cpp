@@ -52,11 +52,16 @@ UnleashClientBuilder &UnleashClientBuilder::cacheFilePath(std::string cacheFileP
     return *this;
 }
 
+UnleashClientBuilder &UnleashClientBuilder::caBuffer(std::string caBuffer) {
+    unleashClient.m_caBuffer = std::move(caBuffer);
+    return *this;
+}
+
 void UnleashClient::initializeClient() {
     if (!m_isInitialized) {
         // Set-up Unleash API client
         if (m_apiClient == nullptr) {
-            m_apiClient = std::make_unique<CprClient>(m_url, m_name, m_instanceId, m_authentication);
+            m_apiClient = std::make_unique<CprClient>(m_url, m_name, m_instanceId, m_authentication, m_caBuffer);
         }
 
         // Register the Client
