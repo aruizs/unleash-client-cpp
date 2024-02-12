@@ -17,12 +17,17 @@ Strategy::Strategy(std::string name, std::string_view constraints) : m_name(std:
     if (!constraints.empty()) {
         auto constraint_json = nlohmann::json::parse(constraints);
         for (const auto &[key, value] : constraint_json.items()) {
-            if ((value.contains("contextName") && value.contains("operator") && value.contains("values")) &&
-                (value["operator"] == "IN" || value["operator"] == "NOT_IN")) {
+            if ((value.contains("contextName") && value.contains("operator"))) {
                 Constraint strategyConstraint{value["contextName"], value["operator"]};
-                for (const auto &[valuesKey, valuesValue] : value["values"].items()) {
-                    strategyConstraint.values.push_back(valuesValue);
+                if (value.contains("values")){
+                    for (const auto &[valuesKey, valuesValue] : value["values"].items()) {
+                        strategyConstraint.values.push_back(valuesValue);
+                    }
+                } else if (value.contains("value")){
+                    strategyConstraint.values.push_back(value["value"]);
                 }
+                strategyConstraint.inverted = (value.contains("inverted") && value["inverted"] == true);
+                strategyConstraint.caseInsensitive = (value.contains("caseInsensitive") && value["caseInsensitive"] == true);
                 m_constraints.push_back(strategyConstraint);
             }
         }
@@ -56,26 +61,73 @@ bool Strategy::meetConstraints(const Context &context) const {
 }
 
 bool Strategy::checkContextConstraint(const Context &context, const Constraint &constraint) const {
-    bool inCondition = (constraint.constraintOperator == "IN");
-    bool contextIn = false;
+    bool match = false;
     if (constraint.contextName == "environment") {
-        contextIn = (std::find(constraint.values.begin(), constraint.values.end(), context.environment) !=
-                     constraint.values.end());
+        match = evalConstraintOperator(context.environment, constraint);
     } else if (constraint.contextName == "appName") {
-        contextIn = (std::find(constraint.values.begin(), constraint.values.end(), context.appName) !=
-                     constraint.values.end());
+        match = evalConstraintOperator(context.appName, constraint);
     } else if (constraint.contextName == "userId") {
-        contextIn = (std::find(constraint.values.begin(), constraint.values.end(), context.userId) !=
-                     constraint.values.end());
+        match = evalConstraintOperator(context.userId, constraint);
+    } else if (constraint.contextName == "remoteAddress") {
+        match = evalConstraintOperator(context.remoteAddress, constraint);
+    } else if (constraint.contextName == "sessionId") {
+        match = evalConstraintOperator(context.sessionId, constraint);
     } else if (context.properties.find(constraint.contextName) != context.properties.end()) {
-        contextIn = (std::find(constraint.values.begin(), constraint.values.end(),
-                               context.properties.at(constraint.contextName)) != constraint.values.end());
+        match = evalConstraintOperator(context.properties.at(constraint.contextName), constraint);
     }
 
-    if (contextIn == inCondition) return true;
-
-    return false;
+    return match != constraint.inverted;
 }
 
+bool Strategy::evalConstraintOperator(const std::string &contextVariable, const Constraint &constraint) const {
+    if (constraint.constraintOperator == "IN"){
+        return (std::find(constraint.values.begin(), constraint.values.end(), contextVariable) != constraint.values.end());
+    } else if (constraint.constraintOperator == "NOT_IN") {
+        std::cout << "HERE context: " << contextVariable << "- " << std::endl;
+        return (std::find(constraint.values.begin(), constraint.values.end(), contextVariable) == constraint.values.end());
+    } else if (constraint.constraintOperator == "STR_CONTAINS") {
+        for (auto word : constraint.values){
+            const auto iterator = std::search(contextVariable.begin(), contextVariable.end(), word.begin(), word.end(),
+                [&constraint](unsigned char first, unsigned char second){ return (constraint.caseInsensitive ? std::tolower(first) == std::tolower(second) : first == second);});
+            if (iterator != contextVariable.end())
+                return true;
+        }
+        return false;
+    } else if (constraint.constraintOperator == "STR_STARTS_WITH") {
+        for (const auto& start : constraint.values){
+            const auto iterator = std::search(contextVariable.begin(), contextVariable.end(), start.begin(), start.end(),
+                [&constraint](unsigned char first, unsigned char second){ return (constraint.caseInsensitive ? std::tolower(first) == std::tolower(second) : first == second);});
+            if (iterator == contextVariable.begin())
+                return true;
+        }
+        return false;
+    } else if (constraint.constraintOperator == "STR_ENDS_WITH") {
+        for (const auto& termination : constraint.values){
+            const auto iterator = std::search(contextVariable.begin(), contextVariable.end(), termination.begin(), termination.end(),
+                [&constraint](unsigned char first, unsigned char second){ return (constraint.caseInsensitive ? std::tolower(first) == std::tolower(second) : first == second);});
+            if (iterator == contextVariable.end() - termination.length())
+                return true;
+        }
+        return false;
+    } else if (constraint.constraintOperator == "NUM_EQ") {
+        return std::stod(contextVariable) == std::stod(constraint.values.front());
+    } else if (constraint.constraintOperator == "NUM_GT") {
+        return std::stod(contextVariable) > std::stod(constraint.values.front());
+    } else if (constraint.constraintOperator == "NUM_GTE") {
+        return std::stod(contextVariable) >= std::stod(constraint.values.front());
+    } else if (constraint.constraintOperator == "NUM_LT") {
+        return std::stod(contextVariable) < std::stod(constraint.values.front());
+    } else if (constraint.constraintOperator == "NUM_LTE") {
+        return std::stod(contextVariable) <= std::stod(constraint.values.front());
+    } 
+    // else if (constraint.constraintOperator == "SEMVER_EQ") {
+        
+    // } else if (constraint.constraintOperator == "SEMVER_GT") {
+        
+    // } else if (constraint.constraintOperator == "SEMVER_LT") {
+        
+    // }
+    return false;
+}
 
 }  // namespace unleash
