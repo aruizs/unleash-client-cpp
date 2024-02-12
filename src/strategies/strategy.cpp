@@ -28,6 +28,10 @@ Strategy::Strategy(std::string name, std::string_view constraints) : m_name(std:
                 }
                 strategyConstraint.inverted = (value.contains("inverted") && value["inverted"] == true);
                 strategyConstraint.caseInsensitive = (value.contains("caseInsensitive") && value["caseInsensitive"] == true);
+                if (strategyConstraint.constraintOperator == "NOT_IN"){
+                    strategyConstraint.constraintOperator = "IN";
+                    strategyConstraint.inverted = !strategyConstraint.inverted;
+                }
                 m_constraints.push_back(strategyConstraint);
             }
         }
@@ -82,9 +86,6 @@ bool Strategy::checkContextConstraint(const Context &context, const Constraint &
 bool Strategy::evalConstraintOperator(const std::string &contextVariable, const Constraint &constraint) const {
     if (constraint.constraintOperator == "IN"){
         return (std::find(constraint.values.begin(), constraint.values.end(), contextVariable) != constraint.values.end());
-    } else if (constraint.constraintOperator == "NOT_IN") {
-        std::cout << "HERE context: " << contextVariable << "- " << std::endl;
-        return (std::find(constraint.values.begin(), constraint.values.end(), contextVariable) == constraint.values.end());
     } else if (constraint.constraintOperator == "STR_CONTAINS") {
         for (auto word : constraint.values){
             const auto iterator = std::search(contextVariable.begin(), contextVariable.end(), word.begin(), word.end(),

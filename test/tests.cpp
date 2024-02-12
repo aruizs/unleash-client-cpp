@@ -131,11 +131,13 @@ TEST_P(UnleashSpecificationTest, TestSet) {
                                      contextJson.value("appName", "")};
         if (contextJson.contains("properties")) {
             for (auto &[propertyKey, propertyValue] : contextJson["properties"].items()) {
+                if (propertyValue == nullptr)
+                    propertyValue = "";
                 testContext.properties.try_emplace(propertyKey, propertyValue);
             }
         }
         if (!std::get<2>(testData)) {
-            std::cout << value["toggleName"] << " & " << testContext.properties["customFieldMissing"] << " & " << value["expectedResult"] << std::endl;
+            std::cout << value["toggleName"] <<" & " << value["expectedResult"] << std::endl;
             EXPECT_EQ(unleashClient.isEnabled(value["toggleName"], testContext), value["expectedResult"].get<bool>());
         } else {
             std::cout << value["toggleName"] << std::endl;
