@@ -10,6 +10,7 @@ struct Context {
     std::string remoteAddress;
     std::string environment;
     std::string appName;
+    std::string currentTime;
     std::map<std::string, std::string> properties;
 };
 }  // namespace unleash

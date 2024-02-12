@@ -8,8 +8,10 @@
 #include "unleash/strategies/remoteaddress.h"
 #include "unleash/strategies/userwithid.h"
 #include <algorithm>
+#include <ctime>
 #include <iostream>
 #include <nlohmann/json.hpp>
+#include <sstream>
 
 
 namespace unleash {
@@ -76,7 +78,9 @@ bool Strategy::checkContextConstraint(const Context &context, const Constraint &
         match = evalConstraintOperator(context.remoteAddress, constraint);
     } else if (constraint.contextName == "sessionId") {
         match = evalConstraintOperator(context.sessionId, constraint);
-    } else if (context.properties.find(constraint.contextName) != context.properties.end()) {
+    } else if (constraint.contextName == "currentTime") {
+        match = evalConstraintOperator(context.currentTime, constraint);
+    }else if (context.properties.find(constraint.contextName) != context.properties.end()) {
         match = evalConstraintOperator(context.properties.at(constraint.contextName), constraint);
     }
 
@@ -120,14 +124,11 @@ bool Strategy::evalConstraintOperator(const std::string &contextVariable, const 
         return std::stod(contextVariable) < std::stod(constraint.values.front());
     } else if (constraint.constraintOperator == "NUM_LTE") {
         return std::stod(contextVariable) <= std::stod(constraint.values.front());
-    } 
-    // else if (constraint.constraintOperator == "SEMVER_EQ") {
-        
-    // } else if (constraint.constraintOperator == "SEMVER_GT") {
-        
-    // } else if (constraint.constraintOperator == "SEMVER_LT") {
-        
-    // }
+    } else if (constraint.constraintOperator == "DATE_AFTER"){
+        return contextVariable > constraint.values.front();
+    } else if (constraint.constraintOperator == "DATE_BEFORE"){
+        return contextVariable < constraint.values.front();
+    }
     return false;
 }
 

@@ -30,7 +30,6 @@ protected:
 private:
     bool checkContextConstraint(const Context &context, const Constraint &constraint) const;
     bool evalConstraintOperator(const std::string &contextVariable, const Constraint &constraint) const;
-    bool charComparator(const bool caseInsensitive, unsigned char first, unsigned char second) const;
 
     const std::string m_name;
     std::vector<Constraint> m_constraints;

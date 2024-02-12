@@ -128,7 +128,7 @@ TEST_P(UnleashSpecificationTest, TestSet) {
         auto contextJson = value["context"];
         unleash::Context testContext{contextJson.value("userId", ""), contextJson.value("sessionId", ""),
                                      contextJson.value("remoteAddress", ""), contextJson.value("environment", ""),
-                                     contextJson.value("appName", "")};
+                                     contextJson.value("appName", ""), contextJson.value("currentTime", "")};
         if (contextJson.contains("properties")) {
             for (auto &[propertyKey, propertyValue] : contextJson["properties"].items()) {
                 if (propertyValue == nullptr)
