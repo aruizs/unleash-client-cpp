@@ -7,14 +7,20 @@
 
 namespace unleash {
 CprClient::CprClient(std::string url, std::string name, std::string instanceId, std::string authentication,
-                     std::string caBuffer)
+                     std::string caInfo)
     : m_url(std::move(url)), m_instanceId(std::move(instanceId)), m_name(std::move(name)),
-      m_authentication(std::move(authentication)), m_caBuffer(std::move(caBuffer)) {}
+      m_authentication(std::move(authentication)), m_caInfo(std::move(caInfo)) {}
 
 std::string CprClient::features() {
     cpr::SslOptions sslOptions;
 
-    if (!m_caBuffer.empty()) { sslOptions.ca_buffer = m_caBuffer; }
+
+    if (!m_caInfo.empty()) {
+        // since CaInfo takes an rvalue reference and we don't want to move the m_caInfo in
+        // we create a copy of it and move it in
+        std::string copyOfCaInfo = m_caInfo;
+        sslOptions = cpr::Ssl(cpr::ssl::CaInfo{std::move(copyOfCaInfo)});
+    }
     auto response = cpr::Get(cpr::Url{m_url + "/client/features"},
                              cpr::Header{{"UNLEASH-INSTANCEID", m_instanceId},
                                          {"UNLEASH-APPNAME", m_name},
@@ -33,7 +39,13 @@ std::string CprClient::features() {
 bool CprClient::registration(unsigned int refreshInterval) {
     cpr::SslOptions sslOptions;
 
-    if (!m_caBuffer.empty()) { sslOptions.ca_buffer = m_caBuffer; }
+
+    if (!m_caInfo.empty()) {
+        // since CaInfo takes an rvalue reference and we don't want to move the m_caInfo in
+        // we create a copy of it and move it in
+        std::string copyOfCaInfo = m_caInfo;
+        sslOptions = cpr::Ssl(cpr::ssl::CaInfo{std::move(copyOfCaInfo)});
+    }
     nlohmann::json payload;
     payload["appName"] = m_name;
     payload["interval"] = refreshInterval;

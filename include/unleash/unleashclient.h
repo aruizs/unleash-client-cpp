@@ -44,7 +44,7 @@ private:
     std::string m_authentication;
     bool m_registration = false;
     std::string m_cacheFilePath;
-    std::string m_caBuffer;
+    std::string m_caInfo;
     unsigned int m_refreshInterval = 15000;
     std::thread m_thread;
     bool m_stopThread = false;
@@ -69,7 +69,7 @@ public:
     UnleashClientBuilder &authentication(std::string authentication);
     UnleashClientBuilder &registration(bool registration);
     UnleashClientBuilder &cacheFilePath(std::string cacheFilePath);
-    UnleashClientBuilder &caBuffer(std::string caBuffer);
+    UnleashClientBuilder &caInfo(std::string caInfo);
 
 private:
     UnleashClient unleashClient;
