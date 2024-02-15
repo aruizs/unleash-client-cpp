@@ -26,6 +26,7 @@ public:
     friend UNLEASH_EXPORT std::ostream &operator<<(std::ostream &os, const UnleashClient &obj);
     static UnleashClientBuilder create(std::string name, std::string url);
     void initializeClient();
+    std::vector<std::string> featureFlags() const;
     bool isEnabled(const std::string &flag);
     bool isEnabled(const std::string &flag, const Context &context);
     variant_t variant(const std::string &flag, const Context &context);
@@ -43,6 +44,7 @@ private:
     std::string m_authentication;
     bool m_registration = false;
     std::string m_cacheFilePath;
+    std::string m_caInfo;
     unsigned int m_refreshInterval = 15000;
     std::thread m_thread;
     bool m_stopThread = false;
@@ -67,6 +69,7 @@ public:
     UnleashClientBuilder &authentication(std::string authentication);
     UnleashClientBuilder &registration(bool registration);
     UnleashClientBuilder &cacheFilePath(std::string cacheFilePath);
+    UnleashClientBuilder &caInfo(std::string caInfo);
 
 private:
     UnleashClient unleashClient;
