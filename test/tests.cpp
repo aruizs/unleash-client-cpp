@@ -36,7 +36,7 @@ std::vector<TestParam> readSpecificationTestFromDisk(const std::string &testPath
     // range-based to read each test
     for (auto &element : j) {  // Only features implemented for now
         auto testNumber = std::stoi(element.get<std::string>().substr(0, 2));
-        if (testNumber <= 13) {
+        if (testNumber <= 14) {
             std::cout << testPath + element.get<std::string>() << std::endl;
             std::ifstream testFile(testPath + element.get<std::string>());
             nlohmann::json testJson;
@@ -137,10 +137,8 @@ TEST_P(UnleashSpecificationTest, TestSet) {
             }
         }
         if (!std::get<2>(testData)) {
-            std::cout << value["toggleName"] <<" & " << value["expectedResult"] << std::endl;
             EXPECT_EQ(unleashClient.isEnabled(value["toggleName"], testContext), value["expectedResult"].get<bool>());
         } else {
-            std::cout << value["toggleName"] << std::endl;
             nlohmann::json expectedResult = value["expectedResult"];
             auto variant = unleashClient.variant(value["toggleName"], testContext);
             EXPECT_EQ(expectedResult["feature_enabled"], variant.featureEnabled);
