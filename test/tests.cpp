@@ -97,14 +97,29 @@ TEST_P(UnleashSpecificationTest, TestSet) {
     auto testData = GetParam();
     auto apiMock = std::make_shared<ApiClientMock>();
     constexpr unsigned int refreshInterval = 500;
+    std::string cacheFilePath = std::string{std::filesystem::current_path().u8string()}+"/testCache.json";
+    // Initialize auxiliary client to write to cache file
+    unleash::UnleashClient unleashClientTmp = unleash::UnleashClient::create("production", "urlMock")
+                                                    .instanceId("intanceId")
+                                                    .environment("production")
+                                                    .apiClient(apiMock)
+                                                    .refreshInterval(refreshInterval)
+                                                    .authentication("clientToken")
+                                                    .registration(true)
+                                                    .cacheFilePath(cacheFilePath);
+    EXPECT_CALL(*apiMock, features()).WillOnce(Return(std::get<0>(testData)));
+    EXPECT_CALL(*apiMock, registration(refreshInterval)).WillRepeatedly(Return(true));
+    unleashClientTmp.initializeClient();
+    // Initialize proper client, will read from cache file
     unleash::UnleashClient unleashClient = unleash::UnleashClient::create("production", "urlMock")
                                                    .instanceId("intanceId")
                                                    .environment("production")
                                                    .apiClient(apiMock)
                                                    .refreshInterval(refreshInterval)
                                                    .authentication("clientToken")
-                                                   .registration(true);
-    EXPECT_CALL(*apiMock, features()).WillRepeatedly(Return(std::get<0>(testData)));
+                                                   .registration(true)
+                                                   .cacheFilePath(cacheFilePath);
+    EXPECT_CALL(*apiMock, features()).WillRepeatedly(Return("")); // Pretend no internet connection
     EXPECT_CALL(*apiMock, registration(refreshInterval)).WillRepeatedly(Return(true));
     unleashClient.initializeClient();
     nlohmann::json testSet = nlohmann::json::parse(std::get<1>(testData));
@@ -131,6 +146,7 @@ TEST_P(UnleashSpecificationTest, TestSet) {
             if (expectedResult.contains("payload")) EXPECT_EQ(expectedResult["payload"].dump(), variant.payload);
         }
     }
+    std::remove(cacheFilePath.c_str());
 }
 
 INSTANTIATE_TEST_SUITE_P(AllSpecificationFiles, UnleashSpecificationTest,

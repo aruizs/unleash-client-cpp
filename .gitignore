@@ -36,3 +36,7 @@ cmake-*
 
 # IDE settings
 .idea
+
+# Folders
+build
+.vscode
