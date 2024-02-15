@@ -30,6 +30,8 @@ protected:
 private:
     bool checkContextConstraint(const Context &context, const Constraint &constraint) const;
     bool evalConstraintOperator(const std::string &contextVariable, const Constraint &constraint) const;
+    // Parses a date in ISO8601 with timezone and returns the UTC equivalent
+    std::string parseDateWithTimezone(const std::string &dateWithTimezone) const;
 
     const std::string m_name;
     std::vector<Constraint> m_constraints;

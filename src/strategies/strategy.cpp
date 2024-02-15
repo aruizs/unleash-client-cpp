@@ -125,11 +125,38 @@ bool Strategy::evalConstraintOperator(const std::string &contextVariable, const 
     } else if (constraint.constraintOperator == "NUM_LTE") {
         return std::stod(contextVariable) <= std::stod(constraint.values.front());
     } else if (constraint.constraintOperator == "DATE_AFTER"){
+        if (constraint.values.front().length() >= 29)
+            return contextVariable > parseDateWithTimezone(constraint.values.front());
         return contextVariable > constraint.values.front();
     } else if (constraint.constraintOperator == "DATE_BEFORE"){
+        if (constraint.values.front().length() >= 29)
+            return contextVariable < parseDateWithTimezone(constraint.values.front());
         return contextVariable < constraint.values.front();
     }
     return false;
+}
+
+std::string Strategy::parseDateWithTimezone(const std::string &dateWithTimezone) const {
+    std::tm t = {};
+    std::istringstream ss(dateWithTimezone);
+    ss >> std::get_time(&t, "%Y-%m-%dT%H:%M:%S");
+    if (ss.fail()){
+        std::cerr << "Unable to parse date" << std::endl;
+        return "";
+    }
+    const int hours = std::stoi(dateWithTimezone.substr(24,2));
+    const int minutes = std::stoi(dateWithTimezone.substr(27,2));
+    if (dateWithTimezone[23] == '-'){
+        t.tm_hour += hours;
+        t.tm_min += minutes;
+    } else {
+        t.tm_hour -= hours;
+        t.tm_min -= minutes;
+    }
+    mktime(&t);
+    std::stringstream out;
+    out << std::put_time(&t, "%Y-%m-%dT%H:%M:%S.000Z");
+    return out.str();
 }
 
 }  // namespace unleash
