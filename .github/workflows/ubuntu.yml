@@ -8,7 +8,7 @@ on:
 
 env:
   BUILD_TYPE: Debug  
-  SONAR_SCANNER_VERSION: 4.4.0.2170
+  SONAR_SCANNER_VERSION: 6.0.0.4432
   SONAR_SERVER_URL: "https://sonarcloud.io"
   BUILD_WRAPPER_OUT_DIR: build_wrapper_output_directory
 
