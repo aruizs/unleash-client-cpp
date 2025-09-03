@@ -16,6 +16,7 @@ FlexibleRollout::FlexibleRollout(std::string_view parameters, std::string_view c
 }
 
 bool FlexibleRollout::isEnabled(const Context &context) {
+    if (!meetConstraints(context)) return false;
     auto stickinessConfiguration = m_stickiness;
     // Choose strategy configuration
     if (stickinessConfiguration == "default") {
@@ -40,6 +41,6 @@ bool FlexibleRollout::isEnabled(const Context &context) {
         if (customFieldIt == context.properties.end()) return false;
         if (normalizedMurmur3(m_groupId + ":" + customFieldIt->second) > m_rollout) return false;
     }
-    return meetConstraints(context);
+    return true;
 }
 }  // namespace unleash
