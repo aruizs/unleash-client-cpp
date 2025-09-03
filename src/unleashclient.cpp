@@ -69,6 +69,8 @@ void UnleashClient::initializeClient() {
         auto apiFeatures = m_apiClient->features();
         if (apiFeatures.empty()) {
             std::cerr << "Attempted to initialize an Unleash Client instance without server response." << std::endl;
+            if(m_cacheFilePath.empty())
+                return;
             std::ifstream cacheFile(m_cacheFilePath, std::fstream::in);
             if (cacheFile.is_open()){
                 std::cout << "Reading configuration from cached file " << m_cacheFilePath << std::endl;
@@ -76,8 +78,10 @@ void UnleashClient::initializeClient() {
                 features_buffer << cacheFile.rdbuf();
                 cacheFile.close();
                 m_features = loadFeatures(features_buffer.str());
-            } else 
+            } else {
                 std::cout << "Could not open cache file '" << m_cacheFilePath << "' for reading." << std::endl;
+                return;
+            }
         } else {
             m_features = loadFeatures(apiFeatures);
         }
