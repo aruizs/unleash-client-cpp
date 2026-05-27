@@ -21,7 +21,7 @@ Strategy::Strategy(std::string name, std::string_view constraints) : m_name(std:
         for (const auto &[key, value] : constraint_json.items()) {
             if ((value.contains("contextName") && value.contains("operator"))) {
                 Constraint strategyConstraint{value["contextName"], value["operator"]};
-                if (value.contains("values")){
+                if (value.contains("values") && value["values"].size() > 0){
                     for (const auto &[valuesKey, valuesValue] : value["values"].items()) {
                         strategyConstraint.values.push_back(valuesValue);
                     }
