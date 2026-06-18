@@ -135,3 +135,102 @@ TEST_P(UnleashSpecificationTest, TestSet) {
 
 INSTANTIATE_TEST_SUITE_P(AllSpecificationFiles, UnleashSpecificationTest,
                          testing::ValuesIn(readSpecificationTestFromDisk(getTestPath())));
+
+// Bootstrap/Cache tests
+class BootstrapTest : public ::testing::Test {
+protected:
+    void SetUp() override {
+        m_cacheFilePath = std::filesystem::temp_directory_path() / "unleash_test_cache.json";
+        // Clean up any existing cache file
+        std::filesystem::remove(m_cacheFilePath);
+    }
+
+    void TearDown() override {
+        // Clean up cache file after test
+        std::filesystem::remove(m_cacheFilePath);
+    }
+
+    std::filesystem::path m_cacheFilePath;
+    const std::string m_validFeatures = R"({"features":[{"name":"test.feature","enabled":true,"strategies":[{"name":"default"}]}]})";
+};
+
+TEST_F(BootstrapTest, InitializesFromCacheWhenApiFails) {
+    // Write a valid cache file
+    std::ofstream cacheFile(m_cacheFilePath);
+    cacheFile << m_validFeatures;
+    cacheFile.close();
+
+    auto apiMock = std::make_shared<ApiClientMock>();
+    EXPECT_CALL(*apiMock, features()).WillRepeatedly(Return(""));  // API returns empty
+
+    unleash::UnleashClient unleashClient = unleash::UnleashClient::create("production", "urlMock")
+                                                   .apiClient(apiMock)
+                                                   .cacheFilePath(m_cacheFilePath.string());
+    unleashClient.initializeClient();
+
+    EXPECT_TRUE(unleashClient.isEnabled("test.feature"));
+}
+
+TEST_F(BootstrapTest, FailsInitializationWhenApiFailsAndNoCacheExists) {
+    auto apiMock = std::make_shared<ApiClientMock>();
+    EXPECT_CALL(*apiMock, features()).WillRepeatedly(Return(""));
+
+    unleash::UnleashClient unleashClient = unleash::UnleashClient::create("production", "urlMock")
+                                                   .apiClient(apiMock)
+                                                   .cacheFilePath(m_cacheFilePath.string());
+    unleashClient.initializeClient();
+
+    EXPECT_FALSE(unleashClient.isEnabled("test.feature"));
+}
+
+TEST_F(BootstrapTest, FailsInitializationWhenApiFailsAndNoCachePathSet) {
+    auto apiMock = std::make_shared<ApiClientMock>();
+    EXPECT_CALL(*apiMock, features()).WillRepeatedly(Return(""));
+
+    unleash::UnleashClient unleashClient = unleash::UnleashClient::create("production", "urlMock")
+                                                   .apiClient(apiMock);
+    unleashClient.initializeClient();
+
+    EXPECT_FALSE(unleashClient.isEnabled("test.feature"));
+}
+
+TEST_F(BootstrapTest, HandlesInvalidJsonInCacheFile) {
+    // Write invalid JSON to cache
+    std::ofstream cacheFile(m_cacheFilePath);
+    cacheFile << "{ invalid json }";
+    cacheFile.close();
+
+    auto apiMock = std::make_shared<ApiClientMock>();
+    EXPECT_CALL(*apiMock, features()).WillRepeatedly(Return(""));
+
+    unleash::UnleashClient unleashClient = unleash::UnleashClient::create("production", "urlMock")
+                                                   .apiClient(apiMock)
+                                                   .cacheFilePath(m_cacheFilePath.string());
+    unleashClient.initializeClient();
+
+    // Should not crash, and feature should be disabled
+    EXPECT_FALSE(unleashClient.isEnabled("test.feature"));
+}
+
+TEST_F(BootstrapTest, WritesCacheOnSuccessfulApiResponse) {
+    auto apiMock = std::make_shared<ApiClientMock>();
+    EXPECT_CALL(*apiMock, features()).WillRepeatedly(Return(m_validFeatures));
+
+    unleash::UnleashClient unleashClient = unleash::UnleashClient::create("production", "urlMock")
+                                                   .apiClient(apiMock)
+                                                   .refreshInterval(100)
+                                                   .cacheFilePath(m_cacheFilePath.string());
+    unleashClient.initializeClient();
+
+    // Wait for periodic task to write cache (poll interval is 500ms + refresh interval 100ms + buffer)
+    std::this_thread::sleep_for(std::chrono::milliseconds(700));
+
+    // Verify cache file was created
+    EXPECT_TRUE(std::filesystem::exists(m_cacheFilePath));
+
+    // Verify cache contains valid JSON
+    std::ifstream cacheFile(m_cacheFilePath);
+    std::stringstream buffer;
+    buffer << cacheFile.rdbuf();
+    EXPECT_NO_THROW(nlohmann::json::parse(buffer.str()));
+}

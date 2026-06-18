@@ -22,7 +22,7 @@ public:
 
     friend class UnleashClientBuilder;
     ~UnleashClient();
-    UnleashClient(UnleashClient &&) = default;
+    UnleashClient(UnleashClient &&other) noexcept;
     friend UNLEASH_EXPORT std::ostream &operator<<(std::ostream &os, const UnleashClient &obj);
     static UnleashClientBuilder create(std::string name, std::string url);
     void initializeClient();
@@ -35,6 +35,8 @@ private:
     UnleashClient(std::string name, std::string url);
     void periodicTask();
     featuresMap_t loadFeatures(std::string_view features) const;
+    bool loadFeaturesFromCache();
+    bool saveFeaturestoCache(const std::string &features);
 
     std::string m_name;
     std::string m_url;
@@ -48,6 +50,7 @@ private:
     bool m_stopThread = false;
     bool m_isInitialized = false;
     featuresMap_t m_features;
+    mutable std::mutex m_featuresMutex;
     std::shared_ptr<ApiClient> m_apiClient;
     static constexpr unsigned int k_pollInterval = 500;
 };

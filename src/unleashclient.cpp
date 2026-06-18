@@ -69,20 +69,11 @@ void UnleashClient::initializeClient() {
         auto apiFeatures = m_apiClient->features();
         if (apiFeatures.empty()) {
             std::cerr << "Attempted to initialize an Unleash Client instance without server response." << std::endl;
-            if(m_cacheFilePath.empty())
-                return;
-            std::ifstream cacheFile(m_cacheFilePath, std::fstream::in);
-            if (cacheFile.is_open()){
-                std::cout << "Reading configuration from cached file " << m_cacheFilePath << std::endl;
-                std::stringstream features_buffer;
-                features_buffer << cacheFile.rdbuf();
-                cacheFile.close();
-                m_features = loadFeatures(features_buffer.str());
-            } else {
-                std::cout << "Could not open cache file '" << m_cacheFilePath << "' for reading." << std::endl;
+            if (!loadFeaturesFromCache()) {
                 return;
             }
         } else {
+            std::lock_guard<std::mutex> lock(m_featuresMutex);
             m_features = loadFeatures(apiFeatures);
         }
         m_thread = std::thread(&UnleashClient::periodicTask, this);
@@ -96,6 +87,21 @@ void UnleashClient::initializeClient() {
 
 UnleashClient::UnleashClient(std::string name, std::string url) : m_name(std::move(name)), m_url(std::move(url)) {}
 
+UnleashClient::UnleashClient(UnleashClient &&other) noexcept
+    : m_name(std::move(other.m_name)),
+      m_url(std::move(other.m_url)),
+      m_instanceId(std::move(other.m_instanceId)),
+      m_environment(std::move(other.m_environment)),
+      m_authentication(std::move(other.m_authentication)),
+      m_registration(other.m_registration),
+      m_cacheFilePath(std::move(other.m_cacheFilePath)),
+      m_refreshInterval(other.m_refreshInterval),
+      m_thread(std::move(other.m_thread)),
+      m_stopThread(other.m_stopThread),
+      m_isInitialized(other.m_isInitialized),
+      m_features(std::move(other.m_features)),
+      m_apiClient(std::move(other.m_apiClient)) {}
+
 void UnleashClient::periodicTask() {
     unsigned long globalTimer = 0;
     while (!m_stopThread) {
@@ -104,21 +110,12 @@ void UnleashClient::periodicTask() {
         if (globalTimer >= m_refreshInterval) {
             globalTimer = 0;
             auto features_response = m_apiClient->features();
-            if (!features_response.empty()){
-                std::ofstream cacheFile(m_cacheFilePath);
-                if (cacheFile.is_open())
-                    cacheFile << features_response;
-                cacheFile.close();
+            if (!features_response.empty()) {
+                saveFeaturestoCache(features_response);
+                std::lock_guard<std::mutex> lock(m_featuresMutex);
                 m_features = loadFeatures(features_response);
             } else {
-                std::ifstream cacheFile(m_cacheFilePath);
-                if(cacheFile.is_open()){
-                    std::stringstream features_buffer;
-                    features_buffer << cacheFile.rdbuf();
-                    cacheFile.close();
-                    m_features = loadFeatures(features_buffer.str());
-
-                }
+                loadFeaturesFromCache();
             }
         }
     }
@@ -136,6 +133,7 @@ bool UnleashClient::isEnabled(const std::string &flag) {
 
 bool UnleashClient::isEnabled(const std::string &flag, const Context &context) {
     if (m_isInitialized) {
+        std::lock_guard<std::mutex> lock(m_featuresMutex);
         if (auto search = m_features.find(flag); search != m_features.end()) {
             return m_features.at(flag).isEnabled(context);
         }
@@ -146,12 +144,48 @@ bool UnleashClient::isEnabled(const std::string &flag, const Context &context) {
 variant_t UnleashClient::variant(const std::string &flag, const unleash::Context &context) {
     variant_t variant{"disabled", 0, false, false};
     if (m_isInitialized) {
-        variant.featureEnabled = isEnabled(flag, context);
+        std::lock_guard<std::mutex> lock(m_featuresMutex);
         if (auto search = m_features.find(flag); search != m_features.end()) {
+            variant.featureEnabled = m_features.at(flag).isEnabled(context);
             return m_features.at(flag).getVariant(context);
         }
     }
     return variant;
+}
+
+bool UnleashClient::loadFeaturesFromCache() {
+    if (m_cacheFilePath.empty()) {
+        return false;
+    }
+    std::ifstream cacheFile(m_cacheFilePath);
+    if (!cacheFile.is_open()) {
+        std::cerr << "Could not open cache file '" << m_cacheFilePath << "' for reading." << std::endl;
+        return false;
+    }
+    try {
+        std::stringstream features_buffer;
+        features_buffer << cacheFile.rdbuf();
+        std::lock_guard<std::mutex> lock(m_featuresMutex);
+        m_features = loadFeatures(features_buffer.str());
+        std::cout << "Loaded configuration from cache file " << m_cacheFilePath << std::endl;
+        return true;
+    } catch (const nlohmann::json::exception &e) {
+        std::cerr << "Failed to parse cache file: " << e.what() << std::endl;
+        return false;
+    }
+}
+
+bool UnleashClient::saveFeaturestoCache(const std::string &features) {
+    if (m_cacheFilePath.empty()) {
+        return false;
+    }
+    std::ofstream cacheFile(m_cacheFilePath);
+    if (!cacheFile.is_open()) {
+        std::cerr << "Could not open cache file '" << m_cacheFilePath << "' for writing." << std::endl;
+        return false;
+    }
+    cacheFile << features;
+    return true;
 }
 
 UnleashClient::featuresMap_t UnleashClient::loadFeatures(std::string_view features) const {
