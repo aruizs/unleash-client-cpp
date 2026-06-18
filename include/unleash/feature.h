@@ -7,7 +7,7 @@
 #include <vector>
 
 namespace unleash {
-class Context;
+struct Context;
 class Feature {
 public:
     Feature(std::string name, std::vector<std::unique_ptr<Strategy>> strategies, bool enable);

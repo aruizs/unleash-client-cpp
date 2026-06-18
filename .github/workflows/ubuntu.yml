@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
       with:
         fetch-depth: 0
         submodules: recursive
@@ -32,7 +32,7 @@ jobs:
       uses: ashutoshvarma/setup-ninja@master
     
     - name: Cache SonarCloud packages
-      uses: actions/cache@v1
+      uses: actions/cache@v4
       with:
         path: ~/.sonar/cache
         key: ${{ runner.os }}-sonar
@@ -60,7 +60,7 @@ jobs:
       
 
     - name: Configure CMake
-      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DENABLE_TEST_COVERAGE=1 -G Ninja -DCMAKE_PREFIX_PATH=${{github.workspace}}/build
+      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DENABLE_TEST_COVERAGE=1 -G Ninja -DCMAKE_PREFIX_PATH=${{github.workspace}}/build -DUNLEASH_ENABLE_TESTING=ON
 
     - name: Build with sonnar wrapper
       run: build-wrapper-linux-x86-64 --out-dir ${{ env.BUILD_WRAPPER_OUT_DIR }} cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} -j10
@@ -72,7 +72,7 @@ jobs:
     - name: Coverage
       run: find . -name '*.gcda' | xargs gcov
 
-    - uses: codecov/codecov-action@v2
+    - uses: codecov/codecov-action@v4
     
     - name: Run sonar-scanner
       env:

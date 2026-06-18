@@ -15,7 +15,7 @@ if(NOT CMAKE_BUILD_TYPE)
 RelWithDebInfo MinSizeRel." FORCE)
 endif(NOT CMAKE_BUILD_TYPE)
 
-option(ENABLE_TESTING "Enable Test Builds" ON)
+option(UNLEASH_ENABLE_TESTING "Enable Test Builds" ON)
 option(ENABLE_TEST_COVERAGE "Enable Test Coverage" OFF)
 
 find_package(cpr)
@@ -30,7 +30,7 @@ endif()
 # Create the main unleash library target
 add_subdirectory(src)
 
-if(ENABLE_TESTING)
+if(UNLEASH_ENABLE_TESTING)
   enable_testing()
   add_subdirectory(test)
 endif()
