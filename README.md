@@ -22,7 +22,7 @@ The below table shows what features the SDKs support or plan to support.
 - [x] Application registration
 - [x] Variants
 - [ ] Custom stickiness (WIP)
-- [ ] Bootstraping
+- [x] Bootstrapping (local cache fallback)
 - [ ] Usage Metrics
 
 ## Requirements
@@ -42,13 +42,14 @@ mandatories.
 
 | Config                | Required? | Type   | Default value |
 |-----------------------|-----------|--------|---------------|
-| Unleash URL           | Yes | String | N/A           |
-| App. Name             | Yes | String | N/A           |
+| Unleash URL           | Yes       | String | N/A           |
+| App. Name             | Yes       | String | N/A           |
 | Instance ID.          | No        | String | N/A           |
 | Environment           | No        | String | N/A           |
 | Authentication        | No        | String | N/A           |
 | Refresh Interval (ms) | No        | Int    | 15000         |
 | Registration          | No        | Bool   | False         |
+| Cache File Path       | No        | String | N/A           |
 
     unleash::UnleashClient unleashClient = unleash::UnleashClient::create("appName", "unleashServerUrl").instanceId("intanceId").environment("environment").authentication("token").refreshInterval(pollingTime).registration(boolValue);
     unleashClient.initializeClient();
@@ -92,6 +93,22 @@ unleashClient.isEnabled("feature.toogle");
 
 For more information about variants, see the [Variant documentation](https://docs.getunleash.io/advanced/toggle_variants).
 
+### Bootstrapping (Local Cache)
+
+The client supports bootstrapping from a local cache file. This provides offline resilience when the Unleash server is unavailable.
+
+```cpp
+unleash::UnleashClient unleashClient = unleash::UnleashClient::create("appName", "unleashServerUrl")
+    .cacheFilePath("/path/to/cache.json")
+    .initializeClient();
+```
+
+**How it works:**
+- On successful API response, the client saves the feature configuration to the cache file
+- If the API fails during initialization, the client loads features from the cache file
+- During periodic refresh, if the API fails, the client falls back to the cached configuration
+
+This ensures your application can start and operate with the last known feature flag state even when the Unleash server is temporarily unavailable.
 
 ## Integration
 
