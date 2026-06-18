@@ -13,6 +13,7 @@ GradualRolloutSessionId::GradualRolloutSessionId(std::string_view parameters, st
 }
 
 bool GradualRolloutSessionId::isEnabled(const Context &context) {
+    if (!meetConstraints(context)) return false;
     if (context.sessionId.empty()) return false;
     return normalizedMurmur3(m_groupId + ":" + context.sessionId) <= m_percentage;
 }

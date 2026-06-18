@@ -13,6 +13,7 @@ GradualRolloutUserId::GradualRolloutUserId(std::string_view parameters, std::str
 }
 
 bool GradualRolloutUserId::isEnabled(const Context &context) {
+    if (!meetConstraints(context)) return false;
     if (context.userId.empty()) return false;
     return normalizedMurmur3(m_groupId + ":" + context.userId) <= m_percentage;
 }

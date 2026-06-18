@@ -13,6 +13,7 @@ GradualRolloutRandom::GradualRolloutRandom(std::string_view parameters, std::str
 }
 
 bool GradualRolloutRandom::isEnabled(const Context &context) {
+    if (!meetConstraints(context)) return false;
     std::random_device dev;
     std::mt19937 rng(dev());
     std::uniform_int_distribution<std::mt19937::result_type> dist6(1, 100);
