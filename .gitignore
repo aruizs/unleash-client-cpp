@@ -33,6 +33,11 @@
 
 # Build directories
 cmake-*
+build/
+
+# Conan generated files
+CMakeUserPresets.json
+CMakePresets.json
 
 # IDE settings
 .idea
