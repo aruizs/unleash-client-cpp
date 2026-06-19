@@ -1,0 +1,25 @@
+name: vcpkg
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  install:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install build tools
+      run: sudo apt-get update && sudo apt-get install -y cmake ninja-build
+
+    - name: Bootstrap vcpkg
+      run: |
+        git clone --depth 1 https://github.com/microsoft/vcpkg.git
+        ./vcpkg/bootstrap-vcpkg.sh -disableMetrics
+
+    - name: Install unleash-client-cpp from the overlay port
+      run: ./vcpkg/vcpkg install unleash-client-cpp --overlay-ports=vcpkg/ports

@@ -196,6 +196,22 @@ To build with a sanitizer (used by CI), configure with `-DUNLEASH_SANITIZER=addr
 
 This package is published in Conan Center as [unleash-client-cpp/1.5.1](https://conan.io/center/unleash-client-cpp).
 
+### vcpkg
+
+A vcpkg port is maintained in [`vcpkg/ports/unleash-client-cpp`](vcpkg/ports/unleash-client-cpp).
+Until it is merged into the upstream registry, consume it as an overlay port:
+
+```bash
+vcpkg install unleash-client-cpp --overlay-ports=vcpkg/ports
+```
+
+Then, in your CMake project:
+
+```cmake
+find_package(unleash CONFIG REQUIRED)
+target_link_libraries(main PRIVATE unleash::unleash)
+```
+
 ## Tested services
 
 - *Gitlab* using `application name` and `instance id` parameters for authentication.

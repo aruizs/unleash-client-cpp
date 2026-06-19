@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- A vcpkg overlay port under `vcpkg/ports/unleash-client-cpp`, validated by a
+  new CI job, ready for submission to the upstream vcpkg registry.
 - A runnable `quickstart` example under `examples/` (build with
   `-DUNLEASH_BUILD_EXAMPLES=ON`).
 - A `-DUNLEASH_SANITIZER=address|thread|undefined` build option, exercised by a
