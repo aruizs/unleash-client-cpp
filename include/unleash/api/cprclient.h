@@ -9,6 +9,7 @@ public:
     CprClient(std::string url, std::string name, std::string instanceId, std::string authentication = std::string());
     std::string features() override;
     bool registration(unsigned int refreshInterval) override;
+    bool metrics(const std::string &payload) override;
 
 private:
     std::string m_url;

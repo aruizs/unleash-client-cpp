@@ -44,4 +44,21 @@ bool CprClient::registration(unsigned int refreshInterval) {
 
     return false;
 }
+
+bool CprClient::metrics(const std::string &payload) {
+    if (auto response = cpr::Post(cpr::Url{m_url + "/client/metrics"}, cpr::Body{payload},
+                                  cpr::Header{{"UNLEASH-INSTANCEID", m_instanceId},
+                                              {"UNLEASH-APPNAME", m_name},
+                                              {"Authorization", m_authentication},
+                                              {"Content-Type", "application/json"}});
+        response.status_code == 0) {
+        std::cerr << response.error.message << std::endl;
+    } else if (response.status_code >= 400) {
+        std::cerr << "Error [" << response.status_code << "] sending metrics" << std::endl;
+    } else {
+        return true;
+    }
+
+    return false;
+}
 }  // namespace unleash

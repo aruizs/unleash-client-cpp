@@ -4,6 +4,7 @@
 #include "unleash/api/apiclient.h"
 #include "unleash/export.h"
 #include "unleash/feature.h"
+#include <chrono>
 #include <condition_variable>
 #include <functional>
 #include <iostream>
@@ -16,6 +17,12 @@ namespace unleash {
 class UnleashClientBuilder;
 struct Context;
 struct variant_t;
+
+struct ToggleCount {
+    unsigned long yes = 0;
+    unsigned long no = 0;
+    std::map<std::string, unsigned long> variants;
+};
 
 class UNLEASH_EXPORT UnleashClient {
 public:
@@ -43,6 +50,11 @@ private:
     featuresMap_t loadFeatures(std::string_view features) const;
     bool loadFeaturesFromCache();
     bool saveFeaturestoCache(const std::string &features) const;
+    void countToggle(const std::string &flag, bool enabled);
+    void countVariant(const std::string &flag, const std::string &variantName);
+    std::string buildMetricsPayload(const std::map<std::string, ToggleCount> &bucket,
+                                    std::chrono::system_clock::time_point start) const;
+    void flushMetrics();
 
     std::string m_name;
     std::string m_url;
@@ -58,6 +70,11 @@ private:
     featuresMap_t m_features;
     mutable std::mutex m_featuresMutex;
     std::shared_ptr<ApiClient> m_apiClient;
+    bool m_metrics = false;
+    unsigned int m_metricsInterval = 60000;
+    std::map<std::string, ToggleCount> m_metricsBucket;
+    std::chrono::system_clock::time_point m_metricsBucketStart;
+    mutable std::mutex m_metricsMutex;
     static constexpr unsigned int k_pollInterval = 500;
 };
 
@@ -76,6 +93,8 @@ public:
     UnleashClientBuilder &authentication(std::string authentication);
     UnleashClientBuilder &registration(bool registration);
     UnleashClientBuilder &cacheFilePath(std::string cacheFilePath);
+    UnleashClientBuilder &metrics(bool metrics);
+    UnleashClientBuilder &metricsInterval(unsigned int metricsInterval);
 
 private:
     UnleashClient unleashClient;

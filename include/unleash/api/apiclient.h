@@ -9,6 +9,7 @@ public:
     virtual ~ApiClient() = default;
     virtual std::string features() = 0;
     virtual bool registration(unsigned int refreshInterval) = 0;
+    virtual bool metrics(const std::string &payload) = 0;
 };
 }  // namespace unleash
 

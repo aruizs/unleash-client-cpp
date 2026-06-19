@@ -17,6 +17,7 @@ class ApiClientMock : public unleash::ApiClient {
 public:
     MOCK_METHOD(std::string, features, (), (override));
     MOCK_METHOD(bool, registration, (unsigned int), (override));
+    MOCK_METHOD(bool, metrics, (const std::string &), (override));
 };
 
 using TestParam = std::tuple<std::string, std::string, bool>;
@@ -232,4 +233,55 @@ TEST_F(BootstrapTest, WritesCacheOnSuccessfulApiResponse) {
     std::stringstream buffer;
     buffer << cacheFile.rdbuf();
     EXPECT_NO_THROW(nlohmann::json::parse(buffer.str()));
+}
+
+TEST(MetricsTest, ReportsToggleAndVariantCounts) {
+    auto apiMock = std::make_shared<ApiClientMock>();
+    const std::string state =
+            R"({"version":1,"features":[{"name":"metrics.flag","enabled":true,"strategies":[{"name":"default"}],)"
+            R"("variants":[{"name":"v1","weight":100,"payload":{"type":"string","value":"a"}}]}]})";
+    EXPECT_CALL(*apiMock, features()).WillRepeatedly(Return(state));
+    EXPECT_CALL(*apiMock, registration(testing::_)).WillRepeatedly(Return(true));
+
+    std::string capturedPayload;
+    EXPECT_CALL(*apiMock, metrics(testing::_))
+            .WillRepeatedly(testing::DoAll(testing::SaveArg<0>(&capturedPayload), Return(true)));
+
+    auto unleashClient = static_cast<unleash::UnleashClient>(unleash::UnleashClient::create("appName", "urlMock")
+                                                                     .apiClient(apiMock)
+                                                                     .metrics(true)
+                                                                     .metricsInterval(500));
+    unleashClient.initializeClient();
+
+    EXPECT_TRUE(unleashClient.isEnabled("metrics.flag"));
+    EXPECT_FALSE(unleashClient.isEnabled("unknown.flag"));
+    unleashClient.variant("metrics.flag", unleash::Context{});
+
+    // Wait for at least one metrics flush from the periodic thread.
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
+    ASSERT_FALSE(capturedPayload.empty());
+    auto payload = nlohmann::json::parse(capturedPayload);
+    EXPECT_EQ(payload["appName"], "appName");
+    const auto &toggles = payload["bucket"]["toggles"];
+    ASSERT_TRUE(toggles.contains("metrics.flag"));
+    // isEnabled + variant both register an enabled evaluation.
+    EXPECT_EQ(toggles["metrics.flag"]["yes"], 2);
+    EXPECT_EQ(toggles["metrics.flag"]["variants"]["v1"], 1);
+    EXPECT_EQ(toggles["unknown.flag"]["no"], 1);
+}
+
+TEST(MetricsTest, DisabledByDefaultDoesNotReport) {
+    auto apiMock = std::make_shared<ApiClientMock>();
+    const std::string state = R"({"version":1,"features":[{"name":"metrics.flag","enabled":true,"strategies":[{"name":"default"}]}]})";
+    EXPECT_CALL(*apiMock, features()).WillRepeatedly(Return(state));
+    EXPECT_CALL(*apiMock, metrics(testing::_)).Times(0);
+
+    auto unleashClient = static_cast<unleash::UnleashClient>(unleash::UnleashClient::create("appName", "urlMock")
+                                                                     .apiClient(apiMock)
+                                                                     .metricsInterval(500));
+    unleashClient.initializeClient();
+    unleashClient.isEnabled("metrics.flag");
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(800));
 }

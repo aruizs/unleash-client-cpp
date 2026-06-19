@@ -3,7 +3,9 @@
 #include "unleash/strategies/strategy.h"
 #include <nlohmann/json.hpp>
 #include <algorithm>
+#include <ctime>
 #include <fstream>
+#include <iomanip>
 #include <sstream>
 
 namespace unleash {
@@ -47,6 +49,16 @@ UnleashClientBuilder &UnleashClientBuilder::cacheFilePath(std::string cacheFileP
     return *this;
 }
 
+UnleashClientBuilder &UnleashClientBuilder::metrics(bool metrics) {
+    unleashClient.m_metrics = metrics;
+    return *this;
+}
+
+UnleashClientBuilder &UnleashClientBuilder::metricsInterval(unsigned int metricsInterval) {
+    unleashClient.m_metricsInterval = metricsInterval;
+    return *this;
+}
+
 void UnleashClient::initializeClient() {
     if (!m_isInitialized) {
         // Set-up Unleash API client
@@ -70,6 +82,7 @@ void UnleashClient::initializeClient() {
             std::scoped_lock lock(m_featuresMutex);
             m_features = loadFeatures(apiFeatures);
         }
+        m_metricsBucketStart = std::chrono::system_clock::now();
         m_thread = std::thread(&UnleashClient::periodicTask, this);
         m_isInitialized = true;
     } else {
@@ -94,13 +107,19 @@ UnleashClient::UnleashClient(UnleashClient &&other) noexcept
       m_stopThread(other.m_stopThread),
       m_isInitialized(other.m_isInitialized),
       m_features(std::move(other.m_features)),
-      m_apiClient(std::move(other.m_apiClient)) {}
+      m_apiClient(std::move(other.m_apiClient)),
+      m_metrics(other.m_metrics),
+      m_metricsInterval(other.m_metricsInterval),
+      m_metricsBucket(std::move(other.m_metricsBucket)),
+      m_metricsBucketStart(other.m_metricsBucketStart) {}
 
 void UnleashClient::periodicTask() {
     unsigned long globalTimer = 0;
+    unsigned long metricsTimer = 0;
     while (!m_stopThread) {
         std::this_thread::sleep_for(std::chrono::milliseconds(k_pollInterval));
         globalTimer += k_pollInterval;
+        metricsTimer += k_pollInterval;
         if (globalTimer >= m_refreshInterval) {
             globalTimer = 0;
             auto features_response = m_apiClient->features();
@@ -111,6 +130,10 @@ void UnleashClient::periodicTask() {
             } else {
                 loadFeaturesFromCache();
             }
+        }
+        if (m_metrics && metricsTimer >= m_metricsInterval) {
+            metricsTimer = 0;
+            flushMetrics();
         }
     }
 }
@@ -152,13 +175,15 @@ bool UnleashClient::dependenciesSatisfied(const Feature &feature, const Context 
 }
 
 bool UnleashClient::isEnabled(const std::string &flag, const Context &context) {
+    bool enabled = false;
     if (m_isInitialized) {
         std::scoped_lock lock(m_featuresMutex);
         if (auto search = m_features.find(flag); search != m_features.end()) {
-            return dependenciesSatisfied(search->second, context) && search->second.isEnabled(context);
+            enabled = dependenciesSatisfied(search->second, context) && search->second.isEnabled(context);
         }
     }
-    return false;
+    countToggle(flag, enabled);
+    return enabled;
 }
 
 variant_t UnleashClient::variant(const std::string &flag, const unleash::Context &context) {
@@ -166,13 +191,45 @@ variant_t UnleashClient::variant(const std::string &flag, const unleash::Context
     if (m_isInitialized) {
         std::scoped_lock lock(m_featuresMutex);
         if (auto search = m_features.find(flag); search != m_features.end()) {
-            if (!dependenciesSatisfied(search->second, context)) {
-                return variant;
+            if (dependenciesSatisfied(search->second, context)) {
+                variant = search->second.getVariant(context);
             }
-            return search->second.getVariant(context);
         }
     }
+    countToggle(flag, variant.featureEnabled);
+    countVariant(flag, variant.name);
     return variant;
+}
+
+void UnleashClient::countToggle(const std::string &flag, bool enabled) {
+    if (!m_metrics) {
+        return;
+    }
+    std::scoped_lock lock(m_metricsMutex);
+    auto &count = m_metricsBucket[flag];
+    enabled ? ++count.yes : ++count.no;
+}
+
+void UnleashClient::countVariant(const std::string &flag, const std::string &variantName) {
+    if (!m_metrics) {
+        return;
+    }
+    std::scoped_lock lock(m_metricsMutex);
+    ++m_metricsBucket[flag].variants[variantName];
+}
+
+void UnleashClient::flushMetrics() {
+    std::map<std::string, ToggleCount> bucket;
+    std::chrono::system_clock::time_point start;
+    {
+        std::scoped_lock lock(m_metricsMutex);
+        bucket.swap(m_metricsBucket);
+        start = m_metricsBucketStart;
+        m_metricsBucketStart = std::chrono::system_clock::now();
+    }
+    if (!bucket.empty()) {
+        m_apiClient->metrics(buildMetricsPayload(bucket, start));
+    }
 }
 
 bool UnleashClient::loadFeaturesFromCache() {
@@ -208,6 +265,43 @@ bool UnleashClient::saveFeaturestoCache(const std::string &features) const {
     }
     cacheFile << features;
     return true;
+}
+
+namespace {
+std::string toIso8601(std::chrono::system_clock::time_point timePoint) {
+    auto time = std::chrono::system_clock::to_time_t(timePoint);
+    std::tm tm{};
+#ifdef _WIN32
+    gmtime_s(&tm, &time);
+#else
+    gmtime_r(&time, &tm);
+#endif
+    std::ostringstream stream;
+    stream << std::put_time(&tm, "%Y-%m-%dT%H:%M:%SZ");
+    return stream.str();
+}
+}  // namespace
+
+std::string UnleashClient::buildMetricsPayload(const std::map<std::string, ToggleCount> &bucket,
+                                               std::chrono::system_clock::time_point start) const {
+    nlohmann::json payload;
+    payload["appName"] = m_name;
+    payload["instanceId"] = m_instanceId;
+    payload["bucket"]["start"] = toIso8601(start);
+    payload["bucket"]["stop"] = toIso8601(std::chrono::system_clock::now());
+    auto &toggles = payload["bucket"]["toggles"] = nlohmann::json::object();
+    for (const auto &[flag, count] : bucket) {
+        nlohmann::json toggle;
+        toggle["yes"] = count.yes;
+        toggle["no"] = count.no;
+        if (!count.variants.empty()) {
+            for (const auto &[variantName, variantCount] : count.variants) {
+                toggle["variants"][variantName] = variantCount;
+            }
+        }
+        toggles[flag] = toggle;
+    }
+    return payload.dump();
 }
 
 UnleashClient::featuresMap_t UnleashClient::loadFeatures(std::string_view features) const {
