@@ -18,8 +18,8 @@ jobs:
 
     - name: Bootstrap vcpkg
       run: |
-        git clone --depth 1 https://github.com/microsoft/vcpkg.git
-        ./vcpkg/bootstrap-vcpkg.sh -disableMetrics
+        git clone --depth 1 https://github.com/microsoft/vcpkg.git "$RUNNER_TEMP/vcpkg"
+        "$RUNNER_TEMP/vcpkg/bootstrap-vcpkg.sh" -disableMetrics
 
     - name: Install unleash-client-cpp from the overlay port
-      run: ./vcpkg/vcpkg install unleash-client-cpp --overlay-ports=vcpkg/ports
+      run: "$RUNNER_TEMP/vcpkg/vcpkg install unleash-client-cpp --overlay-ports=${{ github.workspace }}/vcpkg/ports"
