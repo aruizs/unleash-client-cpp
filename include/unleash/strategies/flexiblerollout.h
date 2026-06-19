@@ -9,6 +9,10 @@ public:
     explicit FlexibleRollout(std::string_view parameters, std::string_view constraints = {});
     bool isEnabled(const Context &context) override;
 
+protected:
+    std::string variantStickiness() const override { return m_stickiness; }
+    std::string variantGroupId() const override { return m_groupId; }
+
 private:
     std::string m_stickiness;
     std::string m_groupId;

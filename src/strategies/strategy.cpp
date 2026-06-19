@@ -7,6 +7,7 @@
 #include "unleash/strategies/gradualrolloutuserid.h"
 #include "unleash/strategies/remoteaddress.h"
 #include "unleash/strategies/userwithid.h"
+#include "unleash/utils/murmur3hash.h"
 #include <algorithm>
 #include <cctype>
 #include <chrono>
@@ -263,6 +264,52 @@ std::unique_ptr<Strategy> Strategy::createStrategy(std::string_view strategy, st
     else if (strategy == "remoteAddress")
         return std::make_unique<RemoteAddress>(parameters, constraints);
     return nullptr;
+}
+
+void Strategy::setVariants(std::string_view variants) {
+    if (variants.empty()) {
+        return;
+    }
+    auto variantsJson = nlohmann::json::parse(variants);
+    for (const auto &[key, value] : variantsJson.items()) {
+        std::string payload = value.contains("payload") ? value["payload"].dump() : "";
+        std::string overrides = value.contains("overrides") ? value["overrides"].dump() : "";
+        m_variants.push_back(std::make_unique<Variant>(value["name"], value["weight"], payload, overrides));
+        m_totalVariantWeight += value["weight"].get<unsigned int>();
+    }
+}
+
+std::string Strategy::stickinessValue(const Context &context) const {
+    std::string stickiness = variantStickiness();
+    if (stickiness == "default") {
+        if (!context.userId.empty()) return context.userId;
+        if (!context.sessionId.empty()) return context.sessionId;
+        return "";
+    }
+    if (stickiness == "userId") return context.userId;
+    if (stickiness == "sessionId") return context.sessionId;
+    if (auto it = context.properties.find(stickiness); it != context.properties.end()) return it->second;
+    return "";
+}
+
+variant_t Strategy::resolveVariant(const Context &context) const {
+    variant_t variant{"disabled", 0, false, false};
+    if (m_variants.empty()) {
+        return variant;
+    }
+    variant.enabled = true;
+    constexpr uint32_t seed = 86028157;
+    auto normalizedValue = normalizedMurmur3(variantGroupId() + ":" + stickinessValue(context), m_totalVariantWeight, seed);
+    unsigned int weight = 0;
+    for (const auto &eachVariant : m_variants) {
+        weight += eachVariant->getWeight();
+        if (normalizedValue <= weight) {
+            variant.name = eachVariant->getName();
+            variant.payload = eachVariant->getPayload();
+            return variant;
+        }
+    }
+    return variant;
 }
 
 bool Strategy::meetConstraints(const Context &context) const {

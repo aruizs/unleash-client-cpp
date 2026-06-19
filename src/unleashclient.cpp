@@ -235,8 +235,12 @@ UnleashClient::featuresMap_t UnleashClient::loadFeatures(std::string_view featur
             std::string strategyParameters;
             if (strategyValue.contains("parameters")) strategyParameters = strategyValue["parameters"].dump();
             std::string strategyConstraints = resolveConstraints(strategyValue);
-            strategies.push_back(Strategy::createStrategy(strategyValue["name"].get<std::string>(), strategyParameters,
-                                                          strategyConstraints));
+            auto strategy = Strategy::createStrategy(strategyValue["name"].get<std::string>(), strategyParameters,
+                                                     strategyConstraints);
+            if (strategy && strategyValue.contains("variants")) {
+                strategy->setVariants(strategyValue["variants"].dump());
+            }
+            strategies.push_back(std::move(strategy));
         }
         Feature newFeature(value["name"], std::move(strategies), value["enabled"]);
         // Load variants

@@ -26,6 +26,17 @@ variant_t Feature::getVariant(const unleash::Context &context) const {
     if (!isEnabled(context)) { return variant; }
 
     variant.featureEnabled = true;
+
+    // Strategy variants take precedence over feature variants: use the variants of the first
+    // satisfied strategy that defines any.
+    for (const auto &strategy : m_strategies) {
+        if (strategy->hasVariants() && strategy->isEnabled(context)) {
+            variant_t strategyVariant = strategy->resolveVariant(context);
+            strategyVariant.featureEnabled = true;
+            return strategyVariant;
+        }
+    }
+
     if (m_variants.first.empty()) { return variant; }
 
     variant.enabled = true;
