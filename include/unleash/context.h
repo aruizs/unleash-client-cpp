@@ -1,6 +1,5 @@
 #ifndef UNLEASH_CONTEXT_H
 #define UNLEASH_CONTEXT_H
-#include <functional>
 #include <map>
 #include <string>
 
@@ -11,8 +10,9 @@ struct Context {
     std::string remoteAddress;
     std::string environment;
     std::string appName;
+    std::map<std::string, std::string> properties;
+    // Appended after `properties` to preserve the 1.3.0 aggregate-initialization order.
     std::string currentTime;
-    std::map<std::string, std::string, std::less<>> properties;
 };
 }  // namespace unleash
 #endif  //UNLEASH_CONTEXT_H

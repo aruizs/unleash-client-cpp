@@ -26,7 +26,7 @@ struct ToggleCount {
 
 class UNLEASH_EXPORT UnleashClient {
 public:
-    using featuresMap_t = std::map<std::string, Feature, std::less<>>;
+    using featuresMap_t = std::map<std::string, Feature>;
 
     friend class UnleashClientBuilder;
     ~UnleashClient();
@@ -39,7 +39,9 @@ public:
     static UnleashClientBuilder create(std::string name, std::string url);
     void initializeClient();
     bool isEnabled(const std::string &flag);
+    bool isEnabled(const std::string &flag, bool defaultValue);
     bool isEnabled(const std::string &flag, const Context &context);
+    bool isEnabled(const std::string &flag, const Context &context, bool defaultValue);
     variant_t variant(const std::string &flag, const Context &context);
 
 
@@ -84,7 +86,11 @@ class UNLEASH_EXPORT UnleashClientBuilder {
 public:
     UnleashClientBuilder(std::string appName, std::string url) : unleashClient(std::move(appName), std::move(url)) {}
 
-    explicit operator UnleashClient() { return std::move(unleashClient); }
+    // Implicit conversion is kept for backward compatibility with 1.3.0; prefer build().
+    // NOLINTNEXTLINE(google-explicit-constructor,hicpp-explicit-conversions)
+    operator UnleashClient() { return std::move(unleashClient); }
+
+    UnleashClient build() { return std::move(unleashClient); }
 
     UnleashClientBuilder &instanceId(std::string instanceId);
     UnleashClientBuilder &environment(std::string environment);

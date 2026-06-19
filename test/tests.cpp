@@ -111,7 +111,8 @@ TEST_P(UnleashSpecificationTest, TestSet) {
         auto contextJson = value["context"];
         unleash::Context testContext{contextJson.value("userId", ""), contextJson.value("sessionId", ""),
                                      contextJson.value("remoteAddress", ""), contextJson.value("environment", ""),
-                                     contextJson.value("appName", ""), contextJson.value("currentTime", "")};
+                                     contextJson.value("appName", "")};
+        testContext.currentTime = contextJson.value("currentTime", "");
         if (contextJson.contains("properties")) {
             for (auto &[propertyKey, propertyValue] : contextJson["properties"].items()) {
                 if (!propertyValue.is_null()) {
@@ -125,7 +126,7 @@ TEST_P(UnleashSpecificationTest, TestSet) {
             std::cout << value["toggleName"] << std::endl;
             nlohmann::json expectedResult = value["expectedResult"];
             auto variant = unleashClient.variant(value["toggleName"], testContext);
-            EXPECT_EQ(expectedResult["feature_enabled"], variant.featureEnabled);
+            EXPECT_EQ(expectedResult["feature_enabled"], variant.feature_enabled);
             EXPECT_EQ(expectedResult["enabled"], variant.enabled);
             EXPECT_EQ(expectedResult["name"], variant.name);
             if (expectedResult.contains("payload")) EXPECT_EQ(expectedResult["payload"].dump(), variant.payload);
@@ -269,6 +270,48 @@ TEST(MetricsTest, ReportsToggleAndVariantCounts) {
     EXPECT_EQ(toggles["metrics.flag"]["yes"], 2);
     EXPECT_EQ(toggles["metrics.flag"]["variants"]["v1"], 1);
     EXPECT_EQ(toggles["unknown.flag"]["no"], 1);
+}
+
+TEST(ApiErgonomicsTest, BuildReturnsUsableClient) {
+    auto apiMock = std::make_shared<ApiClientMock>();
+    const std::string state = R"({"version":1,"features":[{"name":"build.flag","enabled":true,"strategies":[{"name":"default"}]}]})";
+    EXPECT_CALL(*apiMock, features()).WillRepeatedly(Return(state));
+
+    auto unleashClient = unleash::UnleashClient::create("appName", "urlMock").apiClient(apiMock).build();
+    unleashClient.initializeClient();
+
+    EXPECT_TRUE(unleashClient.isEnabled("build.flag"));
+}
+
+TEST(ApiErgonomicsTest, DefaultValueUsedOnlyForUnknownFlags) {
+    auto apiMock = std::make_shared<ApiClientMock>();
+    const std::string state =
+            R"({"version":1,"features":[{"name":"on.flag","enabled":true,"strategies":[{"name":"default"}]},)"
+            R"({"name":"off.flag","enabled":false,"strategies":[{"name":"default"}]}]})";
+    EXPECT_CALL(*apiMock, features()).WillRepeatedly(Return(state));
+
+    auto unleashClient = unleash::UnleashClient::create("appName", "urlMock").apiClient(apiMock).build();
+    unleashClient.initializeClient();
+
+    // Unknown flag falls back to the supplied default.
+    EXPECT_TRUE(unleashClient.isEnabled("missing.flag", true));
+    EXPECT_FALSE(unleashClient.isEnabled("missing.flag", false));
+
+    // Known flags always evaluate on their own merits, ignoring the default.
+    EXPECT_TRUE(unleashClient.isEnabled("on.flag", false));
+    EXPECT_FALSE(unleashClient.isEnabled("off.flag", true));
+
+    // The context-aware overload behaves the same way.
+    unleash::Context context{"user-1"};
+    EXPECT_TRUE(unleashClient.isEnabled("missing.flag", context, true));
+    EXPECT_TRUE(unleashClient.isEnabled("on.flag", context, false));
+}
+
+TEST(ApiErgonomicsTest, DefaultValueReturnedBeforeInitialization) {
+    auto unleashClient = unleash::UnleashClient::create("appName", "urlMock").build();
+    // Without initialization there are no features, so the default is always returned.
+    EXPECT_TRUE(unleashClient.isEnabled("any.flag", true));
+    EXPECT_FALSE(unleashClient.isEnabled("any.flag", false));
 }
 
 TEST(MetricsTest, DisabledByDefaultDoesNotReport) {

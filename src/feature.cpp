@@ -45,14 +45,14 @@ variant_t Feature::getVariant(const unleash::Context &context) const {
     variant_t variant{"disabled", 0, false, false};
     if (!isEnabled(context)) { return variant; }
 
-    variant.featureEnabled = true;
+    variant.feature_enabled = true;
 
     // Strategy variants take precedence over feature variants: use the variants of the first
     // satisfied strategy that defines any.
     for (const auto &strategy : m_strategies) {
         if (strategy->hasVariants() && strategy->isEnabled(context)) {
             variant_t strategyVariant = strategy->resolveVariant(context);
-            strategyVariant.featureEnabled = true;
+            strategyVariant.feature_enabled = true;
             return strategyVariant;
         }
     }

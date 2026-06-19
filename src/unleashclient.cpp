@@ -145,7 +145,16 @@ UnleashClient::~UnleashClient() {
 
 bool UnleashClient::isEnabled(const std::string &flag) {
     Context context;
-    return isEnabled(flag, context);
+    return isEnabled(flag, context, false);
+}
+
+bool UnleashClient::isEnabled(const std::string &flag, bool defaultValue) {
+    Context context;
+    return isEnabled(flag, context, defaultValue);
+}
+
+bool UnleashClient::isEnabled(const std::string &flag, const Context &context) {
+    return isEnabled(flag, context, false);
 }
 
 bool UnleashClient::dependenciesSatisfied(const Feature &feature, const Context &context) const {
@@ -174,8 +183,10 @@ bool UnleashClient::dependenciesSatisfied(const Feature &feature, const Context 
     return true;
 }
 
-bool UnleashClient::isEnabled(const std::string &flag, const Context &context) {
-    bool enabled = false;
+bool UnleashClient::isEnabled(const std::string &flag, const Context &context, bool defaultValue) {
+    // The default value is returned only for unknown flags; a flag that exists is always evaluated
+    // on its own merits. This matches the fallback semantics of the official Unleash SDKs.
+    bool enabled = defaultValue;
     if (m_isInitialized) {
         std::scoped_lock lock(m_featuresMutex);
         if (auto search = m_features.find(flag); search != m_features.end()) {
@@ -196,7 +207,7 @@ variant_t UnleashClient::variant(const std::string &flag, const unleash::Context
             }
         }
     }
-    countToggle(flag, variant.featureEnabled);
+    countToggle(flag, variant.feature_enabled);
     countVariant(flag, variant.name);
     return variant;
 }

@@ -16,7 +16,7 @@ struct variant_t {
     std::string name;
     unsigned int weight;
     bool enabled;
-    bool featureEnabled;
+    bool feature_enabled;
     std::string payload;
 };
 
