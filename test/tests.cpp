@@ -36,7 +36,7 @@ std::vector<TestParam> readSpecificationTestFromDisk(const std::string &testPath
     // range-based to read each test
     for (auto &element : j) {  // Only features implemented for now
         auto testNumber = std::stoi(element.get<std::string>().substr(0, 2));
-        if (testNumber <= 12) {
+        if (testNumber <= 13) {
             std::cout << testPath + element.get<std::string>() << std::endl;
             std::ifstream testFile(testPath + element.get<std::string>());
             nlohmann::json testJson;
@@ -113,10 +113,12 @@ TEST_P(UnleashSpecificationTest, TestSet) {
         auto contextJson = value["context"];
         unleash::Context testContext{contextJson.value("userId", ""), contextJson.value("sessionId", ""),
                                      contextJson.value("remoteAddress", ""), contextJson.value("environment", ""),
-                                     contextJson.value("appName", "")};
+                                     contextJson.value("appName", ""), contextJson.value("currentTime", "")};
         if (contextJson.contains("properties")) {
             for (auto &[propertyKey, propertyValue] : contextJson["properties"].items()) {
-                testContext.properties.try_emplace(propertyKey, propertyValue);
+                if (!propertyValue.is_null()) {
+                    testContext.properties.try_emplace(propertyKey, propertyValue.get<std::string>());
+                }
             }
         }
         if (!std::get<2>(testData)) {
