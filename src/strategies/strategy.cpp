@@ -12,11 +12,18 @@
 #include <cctype>
 #include <chrono>
 #include <ctime>
+#include <cstdint>
 #include <iomanip>
 #include <iostream>
 #include <nlohmann/json.hpp>
 #include <regex>
 #include <sstream>
+#ifdef _WIN32
+#include <ws2tcpip.h>
+#else
+#include <arpa/inet.h>
+#include <netinet/in.h>
+#endif
 
 
 namespace unleash {
@@ -203,9 +210,56 @@ bool isValidOperator(const std::string &op) {
         "NUM_EQ", "NUM_GT", "NUM_GTE", "NUM_LT", "NUM_LTE",
         "DATE_AFTER", "DATE_BEFORE",
         "SEMVER_EQ", "SEMVER_GT", "SEMVER_GTE", "SEMVER_LT", "SEMVER_LTE",
-        "REGEX"
+        "REGEX", "IN_CIDR"
     };
     return std::find(validOperators.begin(), validOperators.end(), op) != validOperators.end();
+}
+
+// Returns true when the address falls within the given CIDR (or matches an exact IP when no prefix
+// is present). Supports IPv4 and IPv6; an invalid address or CIDR yields false.
+bool ipInCidr(const std::string &address, const std::string &cidr) {
+    std::string network = cidr;
+    int prefix = -1;
+    if (auto slash = cidr.find('/'); slash != std::string::npos) {
+        network = cidr.substr(0, slash);
+        try {
+            size_t pos;
+            prefix = std::stoi(cidr.substr(slash + 1), &pos);
+            if (pos != cidr.size() - slash - 1) return false;
+        } catch (...) {
+            return false;
+        }
+    }
+
+    in_addr address4{};
+    in_addr network4{};
+    if (inet_pton(AF_INET, address.c_str(), &address4) == 1 && inet_pton(AF_INET, network.c_str(), &network4) == 1) {
+        int bits = (prefix < 0) ? 32 : prefix;
+        if (bits < 0 || bits > 32) return false;
+        uint32_t addressBits = ntohl(address4.s_addr);
+        uint32_t networkBits = ntohl(network4.s_addr);
+        uint32_t mask = (bits == 0) ? 0 : (0xFFFFFFFFu << (32 - bits));
+        return (addressBits & mask) == (networkBits & mask);
+    }
+
+    in6_addr address6{};
+    in6_addr network6{};
+    if (inet_pton(AF_INET6, address.c_str(), &address6) == 1 && inet_pton(AF_INET6, network.c_str(), &network6) == 1) {
+        int bits = (prefix < 0) ? 128 : prefix;
+        if (bits < 0 || bits > 128) return false;
+        int fullBytes = bits / 8;
+        int remainingBits = bits % 8;
+        for (int i = 0; i < fullBytes; ++i) {
+            if (address6.s6_addr[i] != network6.s6_addr[i]) return false;
+        }
+        if (remainingBits > 0) {
+            auto mask = static_cast<uint8_t>(0xFF << (8 - remainingBits));
+            if ((address6.s6_addr[fullBytes] & mask) != (network6.s6_addr[fullBytes] & mask)) return false;
+        }
+        return true;
+    }
+
+    return false;
 }
 
 // RE2 (used by the Unleash server) rejects backreferences, while std::regex would happily evaluate
@@ -390,6 +444,12 @@ bool Strategy::checkContextConstraint(const Context &context, const Constraint &
     } else if (constraint.contextName == "userId") {
         contextValue = context.userId;
         contextValueExists = !contextValue.empty();
+    } else if (constraint.contextName == "sessionId") {
+        contextValue = context.sessionId;
+        contextValueExists = !contextValue.empty();
+    } else if (constraint.contextName == "remoteAddress") {
+        contextValue = context.remoteAddress;
+        contextValueExists = !contextValue.empty();
     } else if (constraint.contextName == "currentTime") {
         contextValue = context.currentTime;
         contextValueExists = !contextValue.empty();
@@ -472,6 +532,13 @@ bool Strategy::checkContextConstraint(const Context &context, const Constraint &
             } else {
                 result = contextTime < constraintTime;
             }
+        }
+    } else if (op == "IN_CIDR") {
+        if (!contextValueExists) {
+            result = false;
+        } else {
+            result = std::any_of(constraint.values.begin(), constraint.values.end(),
+                                 [&](const std::string &cidr) { return ipInCidr(contextValue, cidr); });
         }
     } else if (op == "REGEX") {
         if (!contextValueExists || hasBackreference(constraint.value)) {
