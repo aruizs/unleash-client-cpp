@@ -28,7 +28,7 @@ The below table shows what features the SDK supports or plans to support.
 - [x] Custom stickiness
 - [x] Bootstrapping (local cache fallback)
 - [x] Delta API (hydration and event stream)
-- [ ] Usage Metrics
+- [x] Usage Metrics
 
 The client passes the full [Unleash Client Specification](https://github.com/Unleash/client-specification) test suite.
 
@@ -57,6 +57,8 @@ mandatories.
 | Refresh Interval (ms) | No        | Int    | 15000         |
 | Registration          | No        | Bool   | False         |
 | Cache File Path       | No        | String | N/A           |
+| Metrics               | No        | Bool   | False         |
+| Metrics Interval (ms) | No        | Int    | 60000         |
 
     auto unleashClient = static_cast<unleash::UnleashClient>(
         unleash::UnleashClient::create("appName", "unleashServerUrl")
@@ -64,7 +66,9 @@ mandatories.
             .environment("environment")
             .authentication("token")
             .refreshInterval(pollingTime)
-            .registration(boolValue));
+            .registration(boolValue)
+            .metrics(boolValue)
+            .metricsInterval(metricsTime));
     unleashClient.initializeClient();
 
 ### Feature Flag is enabled?
@@ -123,6 +127,23 @@ unleashClient.initializeClient();
 - During periodic refresh, if the API fails, the client falls back to the cached configuration
 
 This ensures your application can start and operate with the last known feature flag state even when the Unleash server is temporarily unavailable.
+
+### Usage Metrics
+
+When enabled, the client tracks how often each feature flag is evaluated (and which variants are served) and periodically reports these counts to the Unleash server's `/client/metrics` endpoint. This powers the usage and "last seen" data shown in the Unleash UI. Metrics are **disabled by default**.
+
+```cpp
+auto unleashClient = static_cast<unleash::UnleashClient>(
+    unleash::UnleashClient::create("appName", "unleashServerUrl")
+        .metrics(true)
+        .metricsInterval(60000));
+unleashClient.initializeClient();
+```
+
+**How it works:**
+- Each `isEnabled` call records a `yes`/`no` count for the flag, and each `variant` call additionally records the served variant
+- Counts are bucketed in memory and flushed to the server every `metricsInterval` milliseconds (default 60000)
+- Counting uses a dedicated lock kept off the evaluation path, so it adds minimal overhead
 
 ## Integration
 
