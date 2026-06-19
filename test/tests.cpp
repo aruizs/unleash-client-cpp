@@ -21,6 +21,26 @@ public:
     MOCK_METHOD(bool, metrics, (const std::string &), (override));
 };
 
+// A custom strategy enabled when the numeric userId is at least the "min" parameter. Exercises
+// parameter parsing and constraint inheritance from the Strategy base class.
+class MinUserIdStrategy : public unleash::Strategy {
+public:
+    MinUserIdStrategy(std::string_view parameters, std::string_view constraints)
+        : unleash::Strategy("minUserId", constraints) {
+        if (!parameters.empty()) {
+            auto json = nlohmann::json::parse(parameters);
+            if (json.contains("min")) m_min = std::stoi(json["min"].get<std::string>());
+        }
+    }
+    bool isEnabled(const unleash::Context &context) override {
+        if (!meetConstraints(context)) return false;
+        return !context.userId.empty() && std::stoi(context.userId) >= m_min;
+    }
+
+private:
+    int m_min = 0;
+};
+
 using TestParam = std::tuple<std::string, std::string, bool>;
 
 std::vector<TestParam> readSpecificationTestFromDisk(const std::string &testPath) {
@@ -235,6 +255,56 @@ TEST_F(BootstrapTest, WritesCacheOnSuccessfulApiResponse) {
     std::stringstream buffer;
     buffer << cacheFile.rdbuf();
     EXPECT_NO_THROW(nlohmann::json::parse(buffer.str()));
+}
+
+TEST(CustomStrategyTest, RegisteredStrategyIsUsedWithParameters) {
+    auto apiMock = std::make_shared<ApiClientMock>();
+    const std::string state =
+            R"({"version":1,"features":[{"name":"custom.flag","enabled":true,)"
+            R"("strategies":[{"name":"minUserId","parameters":{"min":"10"}}]}]})";
+    EXPECT_CALL(*apiMock, features()).WillRepeatedly(Return(state));
+
+    auto unleashClient = unleash::UnleashClient::create("appName", "urlMock")
+                                 .apiClient(apiMock)
+                                 .registerStrategy("minUserId",
+                                                   [](std::string_view parameters, std::string_view constraints) {
+                                                       return std::make_unique<MinUserIdStrategy>(parameters,
+                                                                                                  constraints);
+                                                   })
+                                 .build();
+    unleashClient.initializeClient();
+
+    unleash::Context above;
+    above.userId = "15";
+    unleash::Context below;
+    below.userId = "5";
+    EXPECT_TRUE(unleashClient.isEnabled("custom.flag", above));
+    EXPECT_FALSE(unleashClient.isEnabled("custom.flag", below));
+}
+
+TEST(CustomStrategyTest, OverridesBuiltInStrategyOfTheSameName) {
+    auto apiMock = std::make_shared<ApiClientMock>();
+    // "default" would normally always be enabled; the custom registration takes precedence.
+    const std::string state =
+            R"({"version":1,"features":[{"name":"custom.flag","enabled":true,"strategies":[{"name":"default"}]}]})";
+    EXPECT_CALL(*apiMock, features()).WillRepeatedly(Return(state));
+
+    auto unleashClient = unleash::UnleashClient::create("appName", "urlMock")
+                                 .apiClient(apiMock)
+                                 .registerStrategy("default",
+                                                   [](std::string_view parameters, std::string_view constraints) {
+                                                       return std::make_unique<MinUserIdStrategy>(parameters,
+                                                                                                  constraints);
+                                                   })
+                                 .build();
+    unleashClient.initializeClient();
+
+    unleash::Context context;
+    context.userId = "7";
+    // With min defaulting to 0, userId 7 satisfies the override.
+    EXPECT_TRUE(unleashClient.isEnabled("custom.flag", context));
+    // Empty userId fails the custom strategy, proving the built-in default was replaced.
+    EXPECT_FALSE(unleashClient.isEnabled("custom.flag"));
 }
 
 TEST(MetricsTest, ReportsToggleAndVariantCounts) {

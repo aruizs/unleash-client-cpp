@@ -134,6 +134,7 @@ private:
     featuresMap_t m_features;
     mutable std::mutex m_featuresMutex;
     std::shared_ptr<ApiClient> m_apiClient;
+    std::map<std::string, StrategyFactory> m_customStrategies;
     bool m_metrics = false;
     unsigned int m_metricsInterval = 60000;
     std::map<std::string, ToggleCount> m_metricsBucket;
@@ -182,6 +183,9 @@ public:
     UnleashClientBuilder &metrics(bool metrics);
     /// @brief Sets the metrics flush interval, in milliseconds (default 60000).
     UnleashClientBuilder &metricsInterval(unsigned int metricsInterval);
+    /// @brief Registers a custom activation strategy under @p name, overriding any built-in
+    ///        strategy of the same name.
+    UnleashClientBuilder &registerStrategy(std::string name, StrategyFactory factory);
 
 private:
     UnleashClient unleashClient;

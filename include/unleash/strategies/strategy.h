@@ -2,7 +2,9 @@
 #define UNLEASH_STRATEGY_H
 
 #include "unleash/context.h"
+#include "unleash/export.h"
 #include "unleash/variants/variant.h"
+#include <functional>
 #include <memory>
 #include <string>
 #include <vector>
@@ -20,7 +22,10 @@ struct Constraint {
 };
 
 /// @brief Base class for activation strategies; createStrategy() builds the built-in ones.
-class Strategy {
+///
+/// Custom strategies subclass this, pass their constraints to the base constructor, and call
+/// meetConstraints() from isEnabled(). Register them with UnleashClientBuilder::registerStrategy().
+class UNLEASH_EXPORT Strategy {
 public:
     explicit Strategy(std::string name, std::string_view constraints = {});
     virtual ~Strategy() = default;
@@ -46,6 +51,11 @@ private:
     std::vector<std::unique_ptr<Variant>> m_variants;
     unsigned int m_totalVariantWeight = 0;
 };
+
+/// @brief Builds a custom Strategy from a feature's @p parameters and @p constraints (both JSON).
+/// Register one with UnleashClientBuilder::registerStrategy().
+using StrategyFactory =
+        std::function<std::unique_ptr<Strategy>(std::string_view parameters, std::string_view constraints)>;
 }  // namespace unleash
 
 #endif  //UNLEASH_STRATEGY_H

@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Custom activation strategies: subclass `unleash::Strategy` and register a factory with
+  `UnleashClientBuilder::registerStrategy()`. A registered name overrides the built-in
+  strategy of the same name.
+
 ## [1.5.2] - 2026-06-19
 
 ### Added

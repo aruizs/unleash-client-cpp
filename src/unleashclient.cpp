@@ -59,6 +59,11 @@ UnleashClientBuilder &UnleashClientBuilder::metricsInterval(unsigned int metrics
     return *this;
 }
 
+UnleashClientBuilder &UnleashClientBuilder::registerStrategy(std::string name, StrategyFactory factory) {
+    unleashClient.m_customStrategies[std::move(name)] = std::move(factory);
+    return *this;
+}
+
 void UnleashClient::initializeClient() {
     if (!m_isInitialized) {
         // Set-up Unleash API client
@@ -108,6 +113,7 @@ UnleashClient::UnleashClient(UnleashClient &&other) noexcept
       m_isInitialized(other.m_isInitialized),
       m_features(std::move(other.m_features)),
       m_apiClient(std::move(other.m_apiClient)),
+      m_customStrategies(std::move(other.m_customStrategies)),
       m_metrics(other.m_metrics),
       m_metricsInterval(other.m_metricsInterval),
       m_metricsBucket(std::move(other.m_metricsBucket)),
@@ -413,8 +419,13 @@ UnleashClient::featuresMap_t UnleashClient::loadFeatures(std::string_view featur
             std::string strategyParameters;
             if (strategyValue.contains("parameters")) strategyParameters = strategyValue["parameters"].dump();
             std::string strategyConstraints = resolveConstraints(strategyValue, featureSegments);
-            auto strategy = Strategy::createStrategy(strategyValue["name"].get<std::string>(), strategyParameters,
-                                                     strategyConstraints);
+            const auto strategyName = strategyValue["name"].get<std::string>();
+            std::unique_ptr<Strategy> strategy;
+            if (auto customIt = m_customStrategies.find(strategyName); customIt != m_customStrategies.end()) {
+                strategy = customIt->second(strategyParameters, strategyConstraints);
+            } else {
+                strategy = Strategy::createStrategy(strategyName, strategyParameters, strategyConstraints);
+            }
             if (strategy && strategyValue.contains("variants")) {
                 strategy->setVariants(strategyValue["variants"].dump());
             }

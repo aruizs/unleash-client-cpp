@@ -26,6 +26,7 @@ The below table shows what features the SDK supports or plans to support.
 - [x] Application registration
 - [x] Variants
 - [x] Strategy variants
+- [x] Custom strategies
 - [x] Dependent features
 - [x] Custom stickiness
 - [x] Bootstrapping (local cache fallback)
@@ -120,6 +121,36 @@ unleashClient.isEnabled("feature.toogle");
 ```
 
 For more information about variants, see the [Variant documentation](https://docs.getunleash.io/advanced/toggle_variants).
+
+### Custom Strategies
+
+You can register your own activation strategy by subclassing `unleash::Strategy` and registering a
+factory on the builder. A custom strategy receives the feature's `parameters` and `constraints`
+(both as JSON strings), and calls `meetConstraints()` to honour any configured constraints. A
+registered name overrides the built-in strategy of the same name.
+
+```cpp
+#include "unleash/strategies/strategy.h"
+
+class MinUserIdStrategy : public unleash::Strategy {
+public:
+    MinUserIdStrategy(std::string_view parameters, std::string_view constraints)
+        : unleash::Strategy("minUserId", constraints) {
+        // parse `parameters` (JSON) here
+    }
+    bool isEnabled(const unleash::Context &context) override {
+        return meetConstraints(context) && /* your logic */ true;
+    }
+};
+
+auto client = unleash::UnleashClient::create("appName", "unleashServerUrl")
+        .registerStrategy("minUserId",
+                          [](std::string_view parameters, std::string_view constraints) {
+                              return std::make_unique<MinUserIdStrategy>(parameters, constraints);
+                          })
+        .build();
+client.initializeClient();
+```
 
 ### Bootstrapping (Local Cache)
 
