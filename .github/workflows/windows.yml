@@ -34,5 +34,5 @@ jobs:
       run: cmake --build --preset conan-release -j10
 
     - name: Test
-      working-directory: ${{github.workspace}}/build/test/Release
-      run: .\tests.exe
+      working-directory: ${{github.workspace}}/build
+      run: ctest -C Release --output-on-failure
