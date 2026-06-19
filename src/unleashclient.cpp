@@ -211,8 +211,21 @@ bool UnleashClient::saveFeaturestoCache(const std::string &features) const {
 }
 
 UnleashClient::featuresMap_t UnleashClient::loadFeatures(std::string_view features) const {
-    const auto featuresJson = nlohmann::json::parse(features);
+    auto parsedJson = nlohmann::json::parse(features);
     featuresMap_t featuresMap;
+
+    // Delta API format: features and segments are wrapped in a "hydration" event rather than
+    // sitting at the top level. Unwrap it so the rest of the loading logic is format-agnostic.
+    nlohmann::json featuresJson = parsedJson;
+    if (parsedJson.contains("events")) {
+        featuresJson = nlohmann::json::object();
+        for (const auto &event : parsedJson["events"]) {
+            if (event.value("type", "") == "hydration") {
+                featuresJson = event;
+                break;
+            }
+        }
+    }
 
     auto parseVariants = [](const nlohmann::json &variantsJson) {
         std::pair<std::vector<std::unique_ptr<Variant>>, unsigned int> variants;
@@ -237,33 +250,46 @@ UnleashClient::featuresMap_t UnleashClient::loadFeatures(std::string_view featur
         }
     }
 
-    // Merge a strategy's own constraints with the constraints of its referenced segments. A
-    // reference to a missing segment forces the strategy to never be enabled.
-    auto resolveConstraints = [&segmentsMap](const nlohmann::json &strategyValue) -> std::string {
+    // Append the constraints of the referenced segments. Returns false if any segment is missing.
+    auto appendSegmentConstraints = [&segmentsMap](const nlohmann::json &segmentIds, nlohmann::json &constraints) {
+        for (const auto &segmentId : segmentIds) {
+            auto segmentIt = segmentsMap.find(segmentId.get<int>());
+            if (segmentIt == segmentsMap.end()) { return false; }
+            for (const auto &constraint : segmentIt->second) { constraints.push_back(constraint); }
+        }
+        return true;
+    };
+
+    // Merge a strategy's own constraints with the constraints of the segments referenced by both the
+    // strategy and its feature. A reference to a missing segment forces the strategy to stay disabled.
+    auto resolveConstraints = [&](const nlohmann::json &strategyValue,
+                                  const nlohmann::json &featureSegments) -> std::string {
         nlohmann::json constraints = nlohmann::json::array();
         if (strategyValue.contains("constraints")) {
             for (const auto &constraint : strategyValue["constraints"]) { constraints.push_back(constraint); }
         }
+        bool segmentsResolved = true;
         if (strategyValue.contains("segments")) {
-            for (const auto &segmentId : strategyValue["segments"]) {
-                auto segmentIt = segmentsMap.find(segmentId.get<int>());
-                if (segmentIt == segmentsMap.end()) {
-                    // Missing segment: inject an unsatisfiable constraint so the strategy stays disabled.
-                    return nlohmann::json::array({{{"contextName", ""}, {"operator", "MISSING_SEGMENT"}}}).dump();
-                }
-                for (const auto &constraint : segmentIt->second) { constraints.push_back(constraint); }
-            }
+            segmentsResolved = appendSegmentConstraints(strategyValue["segments"], constraints);
+        }
+        if (segmentsResolved && !featureSegments.empty()) {
+            segmentsResolved = appendSegmentConstraints(featureSegments, constraints);
+        }
+        if (!segmentsResolved) {
+            return nlohmann::json::array({{{"contextName", ""}, {"operator", "MISSING_SEGMENT"}}}).dump();
         }
         return constraints.empty() ? std::string{} : constraints.dump();
     };
 
     for (const auto &[key, value] : featuresJson["features"].items()) {
+        const nlohmann::json featureSegments =
+                value.contains("segments") ? value["segments"] : nlohmann::json::array();
         // Load strategies
         std::vector<std::unique_ptr<Strategy>> strategies;
         for (const auto &[strategyKey, strategyValue] : value["strategies"].items()) {
             std::string strategyParameters;
             if (strategyValue.contains("parameters")) strategyParameters = strategyValue["parameters"].dump();
-            std::string strategyConstraints = resolveConstraints(strategyValue);
+            std::string strategyConstraints = resolveConstraints(strategyValue, featureSegments);
             auto strategy = Strategy::createStrategy(strategyValue["name"].get<std::string>(), strategyParameters,
                                                      strategyConstraints);
             if (strategy && strategyValue.contains("variants")) {
