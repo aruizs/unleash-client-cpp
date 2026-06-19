@@ -34,18 +34,15 @@ std::vector<TestParam> readSpecificationTestFromDisk(const std::string &testPath
     i >> j;
 
     // range-based to read each test
-    for (auto &element : j) {  // Only features implemented for now
-        auto testNumber = std::stoi(element.get<std::string>().substr(0, 2));
-        if (testNumber <= 22) {
-            std::cout << testPath + element.get<std::string>() << std::endl;
-            std::ifstream testFile(testPath + element.get<std::string>());
-            nlohmann::json testJson;
-            testFile >> testJson;
-            if (testJson.contains("tests"))
-                values.push_back(std::make_tuple(testJson["state"].dump(), testJson["tests"].dump(), false));
-            else if (testJson.contains("variantTests"))
-                values.push_back(std::make_tuple(testJson["state"].dump(), testJson["variantTests"].dump(), true));
-        }
+    for (auto &element : j) {
+        std::cout << testPath + element.get<std::string>() << std::endl;
+        std::ifstream testFile(testPath + element.get<std::string>());
+        nlohmann::json testJson;
+        testFile >> testJson;
+        if (testJson.contains("tests"))
+            values.push_back(std::make_tuple(testJson["state"].dump(), testJson["tests"].dump(), false));
+        else if (testJson.contains("variantTests"))
+            values.push_back(std::make_tuple(testJson["state"].dump(), testJson["variantTests"].dump(), true));
     }
     return values;
 }
