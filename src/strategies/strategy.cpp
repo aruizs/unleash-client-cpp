@@ -15,6 +15,7 @@
 #include <iomanip>
 #include <iostream>
 #include <nlohmann/json.hpp>
+#include <regex>
 #include <sstream>
 
 
@@ -201,9 +202,61 @@ bool isValidOperator(const std::string &op) {
         "STR_STARTS_WITH", "STR_ENDS_WITH", "STR_CONTAINS",
         "NUM_EQ", "NUM_GT", "NUM_GTE", "NUM_LT", "NUM_LTE",
         "DATE_AFTER", "DATE_BEFORE",
-        "SEMVER_EQ", "SEMVER_GT", "SEMVER_GTE", "SEMVER_LT", "SEMVER_LTE"
+        "SEMVER_EQ", "SEMVER_GT", "SEMVER_GTE", "SEMVER_LT", "SEMVER_LTE",
+        "REGEX"
     };
     return std::find(validOperators.begin(), validOperators.end(), op) != validOperators.end();
+}
+
+// RE2 (used by the Unleash server) rejects backreferences, while std::regex would happily evaluate
+// them. Detect "\1".."\9" so such patterns are treated as invalid and disable the toggle.
+bool hasBackreference(const std::string &pattern) {
+    for (size_t i = 0; i + 1 < pattern.size(); ++i) {
+        if (pattern[i] == '\\') {
+            char next = pattern[i + 1];
+            if (next >= '1' && next <= '9') return true;
+            ++i;  // skip the escaped character
+        }
+    }
+    return false;
+}
+
+// std::regex has no syntax for inline flags such as (?i), (?m) or (?s). Extract any leading/standalone
+// flag groups, translate them to std::regex flags, and emulate dot-all by widening '.' to [\s\S].
+std::string processInlineFlags(std::string pattern, std::regex::flag_type &flags) {
+    static const std::regex flagGroup(R"(\(\?([ims]+)\))");
+    bool dotAll = false;
+    for (std::sregex_iterator it(pattern.begin(), pattern.end(), flagGroup), end; it != end; ++it) {
+        const std::string letters = (*it)[1].str();
+        if (letters.find('i') != std::string::npos) flags |= std::regex::icase;
+        if (letters.find('m') != std::string::npos) flags |= std::regex::multiline;
+        if (letters.find('s') != std::string::npos) dotAll = true;
+    }
+    pattern = std::regex_replace(pattern, flagGroup, "");
+
+    if (!dotAll) {
+        return pattern;
+    }
+    std::string widened;
+    bool inClass = false;
+    for (size_t i = 0; i < pattern.size(); ++i) {
+        char c = pattern[i];
+        if (c == '\\' && i + 1 < pattern.size()) {
+            widened += c;
+            widened += pattern[++i];
+        } else if (c == '[') {
+            inClass = true;
+            widened += c;
+        } else if (c == ']') {
+            inClass = false;
+            widened += c;
+        } else if (c == '.' && !inClass) {
+            widened += R"([\s\S])";
+        } else {
+            widened += c;
+        }
+    }
+    return widened;
 }
 
 }  // namespace
@@ -419,6 +472,20 @@ bool Strategy::checkContextConstraint(const Context &context, const Constraint &
             } else {
                 result = contextTime < constraintTime;
             }
+        }
+    } else if (op == "REGEX") {
+        if (!contextValueExists || hasBackreference(constraint.value)) {
+            return false;
+        }
+        auto flags = std::regex::ECMAScript;
+        if (constraint.caseInsensitive) flags |= std::regex::icase;
+        // processInlineFlags may add flags, so resolve the pattern before constructing the regex.
+        const std::string processedPattern = processInlineFlags(constraint.value, flags);
+        try {
+            std::regex pattern(processedPattern, flags);
+            result = std::regex_search(contextValue, pattern);
+        } catch (const std::regex_error &) {
+            return false;  // invalid regex disables the toggle, regardless of inversion
         }
     } else if (op == "SEMVER_EQ" || op == "SEMVER_GT" || op == "SEMVER_GTE" || op == "SEMVER_LT" || op == "SEMVER_LTE") {
         if (!contextValueExists) {
