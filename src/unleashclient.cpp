@@ -214,17 +214,35 @@ UnleashClient::featuresMap_t UnleashClient::loadFeatures(std::string_view featur
     auto parsedJson = nlohmann::json::parse(features);
     featuresMap_t featuresMap;
 
-    // Delta API format: features and segments are wrapped in a "hydration" event rather than
-    // sitting at the top level. Unwrap it so the rest of the loading logic is format-agnostic.
+    // Delta API format: features and segments arrive as a stream of events rather than sitting at
+    // the top level. Replay the events in order to build the effective state, then hand it to the
+    // rest of the loading logic so that it stays format-agnostic.
     nlohmann::json featuresJson = parsedJson;
     if (parsedJson.contains("events")) {
-        featuresJson = nlohmann::json::object();
+        std::map<std::string, nlohmann::json> featureByName;
+        std::map<int, nlohmann::json> segmentById;
         for (const auto &event : parsedJson["events"]) {
-            if (event.value("type", "") == "hydration") {
-                featuresJson = event;
-                break;
+            const std::string type = event.value("type", "");
+            if (type == "hydration") {
+                for (const auto &feature : event.value("features", nlohmann::json::array())) {
+                    featureByName[feature["name"].get<std::string>()] = feature;
+                }
+                for (const auto &segment : event.value("segments", nlohmann::json::array())) {
+                    segmentById[segment["id"].get<int>()] = segment;
+                }
+            } else if (type == "feature-updated") {
+                featureByName[event["feature"]["name"].get<std::string>()] = event["feature"];
+            } else if (type == "feature-removed") {
+                featureByName.erase(event["featureName"].get<std::string>());
+            } else if (type == "segment-updated") {
+                segmentById[event["segment"]["id"].get<int>()] = event["segment"];
             }
         }
+        featuresJson = nlohmann::json::object();
+        featuresJson["features"] = nlohmann::json::array();
+        for (auto &[name, feature] : featureByName) { featuresJson["features"].push_back(feature); }
+        featuresJson["segments"] = nlohmann::json::array();
+        for (auto &[id, segment] : segmentById) { featuresJson["segments"].push_back(segment); }
     }
 
     auto parseVariants = [](const nlohmann::json &variantsJson) {
