@@ -11,6 +11,8 @@
 This repository provides a C++ client SDK for Unleash that meets
 the [Unleash Client Specifications](https://github.com/Unleash/client-specification).
 
+📖 API reference: https://aruizs.github.io/unleash-client-cpp/
+
 ## Features
 
 The below table shows what features the SDK supports or plans to support.

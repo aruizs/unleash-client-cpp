@@ -9,15 +9,17 @@
 
 namespace unleash {
 
+/// @brief A single activation-strategy constraint evaluated against the Context.
 struct Constraint {
-    std::string contextName;
-    std::string constraintOperator;
-    std::vector<std::string> values;
-    std::string value;
-    bool inverted = false;
-    bool caseInsensitive = false;
+    std::string contextName;         ///< Context field the constraint applies to.
+    std::string constraintOperator;  ///< Operator (e.g. IN, STR_CONTAINS, SEMVER_GT, IN_CIDR).
+    std::vector<std::string> values; ///< Candidate values for multi-value operators.
+    std::string value;               ///< Single value for single-value operators.
+    bool inverted = false;           ///< Negates the result when set.
+    bool caseInsensitive = false;    ///< Case-insensitive comparison for string operators.
 };
 
+/// @brief Base class for activation strategies; createStrategy() builds the built-in ones.
 class Strategy {
 public:
     explicit Strategy(std::string name, std::string_view constraints = {});

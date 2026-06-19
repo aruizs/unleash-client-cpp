@@ -12,12 +12,13 @@ struct Override {
     std::vector<std::string> values;
 };
 
+/// @brief Result of a UnleashClient::variant() query.
 struct variant_t {
-    std::string name;
-    unsigned int weight;
-    bool enabled;
-    bool feature_enabled;
-    std::string payload;
+    std::string name;       ///< Variant name (@c "disabled" when no variant applies).
+    unsigned int weight;    ///< Configured weight of the variant.
+    bool enabled;           ///< Whether a real variant was selected.
+    bool feature_enabled;   ///< Whether the underlying feature flag is enabled.
+    std::string payload;    ///< Variant payload, serialized as JSON.
 };
 
 class Variant {

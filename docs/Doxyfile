@@ -1,0 +1,23 @@
+# Doxygen configuration for the Unleash C++ client SDK.
+# Run from the repository root: `doxygen docs/Doxyfile`.
+# HTML output is written to build/doxygen/html.
+
+PROJECT_NAME           = "Unleash Client SDK for C++"
+PROJECT_BRIEF          = "C++17 client SDK for Unleash feature flags"
+OUTPUT_DIRECTORY       = build/doxygen
+
+INPUT                  = include README.md
+USE_MDFILE_AS_MAINPAGE = README.md
+RECURSIVE              = YES
+STRIP_FROM_PATH        = include
+FILE_PATTERNS          = *.h *.hpp *.md
+
+EXTRACT_ALL            = YES
+EXTRACT_STATIC         = YES
+JAVADOC_AUTOBRIEF      = YES
+WARN_IF_UNDOCUMENTED   = NO
+QUIET                  = YES
+
+GENERATE_HTML          = YES
+GENERATE_LATEX         = NO
+HAVE_DOT               = NO

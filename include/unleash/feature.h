@@ -9,13 +9,15 @@
 namespace unleash {
 struct Context;
 
+/// @brief A dependency of a feature on another (parent) feature's state.
 struct Dependency {
-    std::string feature;
-    bool enabled = true;
-    bool hasVariants = false;
-    std::vector<std::string> variants;
+    std::string feature;              ///< Name of the parent feature.
+    bool enabled = true;              ///< Required enabled state of the parent.
+    bool hasVariants = false;         ///< Whether specific parent variants are required.
+    std::vector<std::string> variants;  ///< Accepted parent variant names, when required.
 };
 
+/// @brief A feature flag with its activation strategies, variants and dependencies.
 class Feature {
 public:
     Feature(std::string name, std::vector<std::unique_ptr<Strategy>> strategies, bool enable);
