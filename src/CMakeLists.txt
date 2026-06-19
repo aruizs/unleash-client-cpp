@@ -21,6 +21,12 @@ target_include_directories(
         unleash PUBLIC "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>")
 target_link_libraries(unleash PRIVATE cpr::cpr
         nlohmann_json::nlohmann_json)
+
+# inet_pton (CIDR operator, strategy.cpp) lives in ws2_32 on Windows. Link it
+# explicitly so a shared/DLL build of unleash resolves the symbol on its own.
+if(WIN32)
+    target_link_libraries(unleash PRIVATE ws2_32)
+endif()
 set_target_properties(unleash PROPERTIES VERSION ${unleash_VERSION}
         SOVERSION ${unleash_VERSION_MAJOR})
 

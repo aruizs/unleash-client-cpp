@@ -36,3 +36,10 @@ jobs:
     - name: Test
       working-directory: ${{github.workspace}}/build
       run: ctest -C Release --output-on-failure
+
+    # A DLL is linked at build time, so this catches missing system-library
+    # links (e.g. ws2_32 for inet_pton) that a static build would not.
+    - name: Build shared library
+      run: |
+        cmake --preset conan-default -DUNLEASH_ENABLE_TESTING=OFF -Dunleash_SHARED_LIBS=ON
+        cmake --build --preset conan-release --target unleash -j10

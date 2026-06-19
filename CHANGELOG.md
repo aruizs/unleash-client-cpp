@@ -22,6 +22,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   implementations no longer need to override it.
 
 ### Fixed
+- Link `ws2_32` on Windows so a shared/DLL build resolves `inet_pton` (used by
+  the `IN_CIDR` operator) without relying on a consumer to pull it in.
 - Removed a data race between the background polling thread and client
   destruction by making the stop flag atomic.
 
