@@ -61,7 +61,7 @@ class UNLEASH_EXPORT UnleashClientBuilder {
 public:
     UnleashClientBuilder(std::string appName, std::string url) : unleashClient(std::move(appName), std::move(url)) {}
 
-    operator UnleashClient() { return std::move(unleashClient); }
+    explicit operator UnleashClient() { return std::move(unleashClient); }
 
     UnleashClientBuilder &instanceId(std::string instanceId);
     UnleashClientBuilder &environment(std::string environment);

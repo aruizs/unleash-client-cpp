@@ -191,6 +191,21 @@ bool UnleashClient::saveFeaturestoCache(const std::string &features) {
 UnleashClient::featuresMap_t UnleashClient::loadFeatures(std::string_view features) const {
     const auto featuresJson = nlohmann::json::parse(features);
     featuresMap_t featuresMap;
+
+    auto parseVariants = [](const nlohmann::json &variantsJson) {
+        std::pair<std::vector<std::unique_ptr<Variant>>, unsigned int> variants;
+        unsigned int totalWeight = 0;
+        for (const auto &[variantKey, variantValue] : variantsJson.items()) {
+            std::string variantPayload = variantValue.contains("payload") ? variantValue["payload"].dump() : "";
+            std::string variantOverrides = variantValue.contains("overrides") ? variantValue["overrides"].dump() : "";
+            variants.first.push_back(std::make_unique<Variant>(variantValue["name"], variantValue["weight"],
+                                                               variantPayload, variantOverrides));
+            totalWeight += variantValue["weight"].get<unsigned int>();
+        }
+        variants.second = totalWeight;
+        return variants;
+    };
+
     for (const auto &[key, value] : featuresJson["features"].items()) {
         // Load strategies
         std::vector<std::unique_ptr<Strategy>> strategies;
@@ -204,20 +219,8 @@ UnleashClient::featuresMap_t UnleashClient::loadFeatures(std::string_view featur
         }
         Feature newFeature(value["name"], std::move(strategies), value["enabled"]);
         // Load variants
-        std::pair<std::vector<std::unique_ptr<Variant>>, unsigned int> variants;
         if (value.contains("variants")) {
-            unsigned int totalWeight = 0;
-            for (const auto &[variantKey, variantValue] : value["variants"].items()) {
-                std::string variantPayload;
-                if (variantValue.contains("payload")) variantPayload = variantValue["payload"].dump();
-                std::string variantOverrides;
-                if (variantValue.contains("overrides")) variantOverrides = variantValue["overrides"].dump();
-                variants.first.push_back(std::make_unique<Variant>(variantValue["name"], variantValue["weight"],
-                                                                   variantPayload, variantOverrides));
-                totalWeight += variantValue["weight"].get<unsigned int>();
-            }
-            variants.second = totalWeight;
-            newFeature.setVariants(std::move(variants));
+            newFeature.setVariants(parseVariants(value["variants"]));
         }
         featuresMap.try_emplace(value["name"], std::move(newFeature));
     }

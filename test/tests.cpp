@@ -60,28 +60,28 @@ std::string getTestPath() {
 class UnleashSpecificationTest : public testing::TestWithParam<TestParam> {};
 
 TEST(UnleashTest, InicializationBadServerUrl) {
-    unleash::UnleashClient unleashClient = unleash::UnleashClient::create("production", "urlMock");
+    auto unleashClient = static_cast<unleash::UnleashClient>(unleash::UnleashClient::create("production", "urlMock"));
     std::cout << unleashClient << std::endl;
     unleashClient.initializeClient();
     EXPECT_FALSE(unleashClient.isEnabled("feature.toogle"));
 }
 
 TEST(UnleashTest, InicializationErrorServerResponse) {
-    unleash::UnleashClient unleashClient = unleash::UnleashClient::create("production", "https://www.apple.com/%");
+    auto unleashClient = static_cast<unleash::UnleashClient>(unleash::UnleashClient::create("production", "https://www.apple.com/%"));
     unleashClient.initializeClient();
     EXPECT_FALSE(unleashClient.isEnabled("feature.toogle"));
 }
 
 TEST(UnleashTest, RegistrationBadServerUrl) {
-    unleash::UnleashClient unleashClient = unleash::UnleashClient::create("production", "urlMock").registration(true);
+    auto unleashClient = static_cast<unleash::UnleashClient>(unleash::UnleashClient::create("production", "urlMock").registration(true));
     std::cout << unleashClient << std::endl;
     unleashClient.initializeClient();
     EXPECT_FALSE(unleashClient.isEnabled("feature.toogle"));
 }
 
 TEST(UnleashTest, RegistrationErrorServerResponse) {
-    unleash::UnleashClient unleashClient =
-            unleash::UnleashClient::create("production", "https://www.apple.com/%").registration(true);
+    auto unleashClient = static_cast<unleash::UnleashClient>(
+            unleash::UnleashClient::create("production", "https://www.apple.com/%").registration(true));
     unleashClient.initializeClient();
     EXPECT_FALSE(unleashClient.isEnabled("feature.toogle"));
 }
@@ -97,13 +97,13 @@ TEST_P(UnleashSpecificationTest, TestSet) {
     auto testData = GetParam();
     auto apiMock = std::make_shared<ApiClientMock>();
     constexpr unsigned int refreshInterval = 500;
-    unleash::UnleashClient unleashClient = unleash::UnleashClient::create("production", "urlMock")
+    auto unleashClient = static_cast<unleash::UnleashClient>(unleash::UnleashClient::create("production", "urlMock")
                                                    .instanceId("intanceId")
                                                    .environment("production")
                                                    .apiClient(apiMock)
                                                    .refreshInterval(refreshInterval)
                                                    .authentication("clientToken")
-                                                   .registration(true);
+                                                   .registration(true));
     EXPECT_CALL(*apiMock, features()).WillRepeatedly(Return(std::get<0>(testData)));
     EXPECT_CALL(*apiMock, registration(refreshInterval)).WillRepeatedly(Return(true));
     unleashClient.initializeClient();
@@ -163,9 +163,9 @@ TEST_F(BootstrapTest, InitializesFromCacheWhenApiFails) {
     auto apiMock = std::make_shared<ApiClientMock>();
     EXPECT_CALL(*apiMock, features()).WillRepeatedly(Return(""));  // API returns empty
 
-    unleash::UnleashClient unleashClient = unleash::UnleashClient::create("production", "urlMock")
+    auto unleashClient = static_cast<unleash::UnleashClient>(unleash::UnleashClient::create("production", "urlMock")
                                                    .apiClient(apiMock)
-                                                   .cacheFilePath(m_cacheFilePath.string());
+                                                   .cacheFilePath(m_cacheFilePath.string()));
     unleashClient.initializeClient();
 
     EXPECT_TRUE(unleashClient.isEnabled("test.feature"));
@@ -175,9 +175,9 @@ TEST_F(BootstrapTest, FailsInitializationWhenApiFailsAndNoCacheExists) {
     auto apiMock = std::make_shared<ApiClientMock>();
     EXPECT_CALL(*apiMock, features()).WillRepeatedly(Return(""));
 
-    unleash::UnleashClient unleashClient = unleash::UnleashClient::create("production", "urlMock")
+    auto unleashClient = static_cast<unleash::UnleashClient>(unleash::UnleashClient::create("production", "urlMock")
                                                    .apiClient(apiMock)
-                                                   .cacheFilePath(m_cacheFilePath.string());
+                                                   .cacheFilePath(m_cacheFilePath.string()));
     unleashClient.initializeClient();
 
     EXPECT_FALSE(unleashClient.isEnabled("test.feature"));
@@ -187,8 +187,8 @@ TEST_F(BootstrapTest, FailsInitializationWhenApiFailsAndNoCachePathSet) {
     auto apiMock = std::make_shared<ApiClientMock>();
     EXPECT_CALL(*apiMock, features()).WillRepeatedly(Return(""));
 
-    unleash::UnleashClient unleashClient = unleash::UnleashClient::create("production", "urlMock")
-                                                   .apiClient(apiMock);
+    auto unleashClient = static_cast<unleash::UnleashClient>(unleash::UnleashClient::create("production", "urlMock")
+                                                   .apiClient(apiMock));
     unleashClient.initializeClient();
 
     EXPECT_FALSE(unleashClient.isEnabled("test.feature"));
@@ -203,9 +203,9 @@ TEST_F(BootstrapTest, HandlesInvalidJsonInCacheFile) {
     auto apiMock = std::make_shared<ApiClientMock>();
     EXPECT_CALL(*apiMock, features()).WillRepeatedly(Return(""));
 
-    unleash::UnleashClient unleashClient = unleash::UnleashClient::create("production", "urlMock")
+    auto unleashClient = static_cast<unleash::UnleashClient>(unleash::UnleashClient::create("production", "urlMock")
                                                    .apiClient(apiMock)
-                                                   .cacheFilePath(m_cacheFilePath.string());
+                                                   .cacheFilePath(m_cacheFilePath.string()));
     unleashClient.initializeClient();
 
     // Should not crash, and feature should be disabled
@@ -216,10 +216,10 @@ TEST_F(BootstrapTest, WritesCacheOnSuccessfulApiResponse) {
     auto apiMock = std::make_shared<ApiClientMock>();
     EXPECT_CALL(*apiMock, features()).WillRepeatedly(Return(m_validFeatures));
 
-    unleash::UnleashClient unleashClient = unleash::UnleashClient::create("production", "urlMock")
+    auto unleashClient = static_cast<unleash::UnleashClient>(unleash::UnleashClient::create("production", "urlMock")
                                                    .apiClient(apiMock)
                                                    .refreshInterval(100)
-                                                   .cacheFilePath(m_cacheFilePath.string());
+                                                   .cacheFilePath(m_cacheFilePath.string()));
     unleashClient.initializeClient();
 
     // Wait for periodic task to write cache (poll interval is 500ms + refresh interval 100ms + buffer)

@@ -14,18 +14,21 @@
 
 namespace unleash {
 Strategy::Strategy(std::string name, std::string_view constraints) : m_name(std::move(name)) {
-    if (!constraints.empty()) {
-        auto constraint_json = nlohmann::json::parse(constraints);
-        for (const auto &[key, value] : constraint_json.items()) {
-            if ((value.contains("contextName") && value.contains("operator") && value.contains("values")) &&
-                (value["operator"] == "IN" || value["operator"] == "NOT_IN")) {
-                Constraint strategyConstraint{value["contextName"], value["operator"]};
-                for (const auto &[valuesKey, valuesValue] : value["values"].items()) {
-                    strategyConstraint.values.push_back(valuesValue);
-                }
-                m_constraints.push_back(strategyConstraint);
-            }
+    if (constraints.empty()) {
+        return;
+    }
+    auto constraint_json = nlohmann::json::parse(constraints);
+    for (const auto &[key, value] : constraint_json.items()) {
+        bool hasRequiredFields = value.contains("contextName") && value.contains("operator") && value.contains("values");
+        bool hasValidOperator = value["operator"] == "IN" || value["operator"] == "NOT_IN";
+        if (!hasRequiredFields || !hasValidOperator) {
+            continue;
         }
+        Constraint strategyConstraint{value["contextName"], value["operator"]};
+        for (const auto &[valuesKey, valuesValue] : value["values"].items()) {
+            strategyConstraint.values.push_back(valuesValue);
+        }
+        m_constraints.push_back(strategyConstraint);
     }
 }
 

@@ -9,7 +9,7 @@
 
 namespace unleash {
 
-void murmurHash3X8632(const void *key, int len, uint32_t seed, void *out);
+void murmurHash3X8632(const uint8_t *key, int len, uint32_t seed, uint32_t *out);
 
 uint32_t normalizedMurmur3(const std::string &key, uint32_t modulus = 100, uint32_t seed = 0);
 

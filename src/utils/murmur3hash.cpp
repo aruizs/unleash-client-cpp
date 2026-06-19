@@ -73,8 +73,8 @@ FORCE_INLINE uint32_t fmix32(uint32_t h) {
 
 //-----------------------------------------------------------------------------
 
-void murmurHash3X8632(const void *key, int len, uint32_t seed, void *out) {
-    const auto *data = (const uint8_t *) key;
+void murmurHash3X8632(const uint8_t *key, int len, uint32_t seed, uint32_t *out) {
+    const auto *data = key;
     const int nblocks = len / 4;
 
     uint32_t h1 = seed;
@@ -131,12 +131,12 @@ void murmurHash3X8632(const void *key, int len, uint32_t seed, void *out) {
 
     h1 = fmix32(h1);
 
-    *(uint32_t *) out = h1;
+    *out = h1;
 }
 
 uint32_t normalizedMurmur3(const std::string &key, uint32_t modulus, uint32_t seed) {
     uint32_t murmur3Hash;
-    murmurHash3X8632(key.c_str(), static_cast<int>(key.length()), seed, &murmur3Hash);
+    murmurHash3X8632(reinterpret_cast<const uint8_t *>(key.c_str()), static_cast<int>(key.length()), seed, &murmur3Hash);
     murmur3Hash %= modulus;
     murmur3Hash += 1;
     return murmur3Hash;
