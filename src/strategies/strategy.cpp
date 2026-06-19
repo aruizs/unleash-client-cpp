@@ -19,6 +19,12 @@
 #include <regex>
 #include <sstream>
 #ifdef _WIN32
+#ifndef NOMINMAX
+#define NOMINMAX  // prevent <windows.h> from defining min/max macros that clash with std::max
+#endif
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
 #include <ws2tcpip.h>
 #else
 #include <arpa/inet.h>
