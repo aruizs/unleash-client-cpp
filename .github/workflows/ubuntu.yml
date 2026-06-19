@@ -84,5 +84,51 @@ jobs:
       run: |
         sonar-scanner --define sonar.host.url="${{ env.SONAR_SERVER_URL }}" --define sonar.cfamily.compile-commands="${{ env.BUILD_WRAPPER_OUT_DIR }}/compile_commands.json" --define sonar.cfamily.gcov.reportsPath="${{github.workspace}}"
 
+  sanitizers:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        sanitizer: [address, undefined, thread]
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        submodules: recursive
+
+    - name: Get Conan
+      uses: turtlebrowser/get-conan@v1.0
+
+    - name: Create default profile
+      run: conan profile detect
+
+    - name: Setup Ninja
+      uses: ashutoshvarma/setup-ninja@master
+
+    # ThreadSanitizer aborts with "unexpected memory mapping" on the runner's
+    # default ASLR entropy; lowering it is the documented workaround. Harmless
+    # for the other sanitizers. Needed before the build because GoogleTest runs
+    # the test binary at build time to discover test cases.
+    - name: Reduce ASLR entropy for sanitizers
+      run: sudo sysctl -w vm.mmap_rnd_bits=28
+
+    - name: Install dependencies
+      run: conan install . -s build_type=Debug -s compiler.cppstd=17 --build=missing
+
+    - name: Configure CMake
+      run: cmake --preset conan-debug -G Ninja -DUNLEASH_ENABLE_TESTING=ON -DUNLEASH_BUILD_EXAMPLES=ON -DUNLEASH_SANITIZER=${{ matrix.sanitizer }}
+
+    - name: Build
+      run: cmake --build --preset conan-debug -j10
+
+    - name: Test
+      working-directory: ${{github.workspace}}/build/Debug/test
+      env:
+        ASAN_OPTIONS: detect_leaks=1:halt_on_error=1
+        UBSAN_OPTIONS: print_stacktrace=1:halt_on_error=1
+        TSAN_OPTIONS: halt_on_error=1
+      run: ./tests
+
     
   

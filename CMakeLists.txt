@@ -17,6 +17,16 @@ endif(NOT CMAKE_BUILD_TYPE)
 
 option(UNLEASH_ENABLE_TESTING "Enable Test Builds" ON)
 option(ENABLE_TEST_COVERAGE "Enable Test Coverage" OFF)
+option(UNLEASH_BUILD_EXAMPLES "Build the example programs" OFF)
+set(UNLEASH_SANITIZER
+    ""
+    CACHE STRING "Build with a sanitizer: address, thread, or undefined")
+
+if(UNLEASH_SANITIZER)
+  message(STATUS "Building with sanitizer: ${UNLEASH_SANITIZER}")
+  add_compile_options(-fsanitize=${UNLEASH_SANITIZER} -fno-omit-frame-pointer -g)
+  add_link_options(-fsanitize=${UNLEASH_SANITIZER})
+endif()
 
 find_package(cpr)
 find_package(nlohmann_json)
@@ -33,6 +43,10 @@ add_subdirectory(src)
 if(UNLEASH_ENABLE_TESTING)
   enable_testing()
   add_subdirectory(test)
+endif()
+
+if(UNLEASH_BUILD_EXAMPLES)
+  add_subdirectory(examples)
 endif()
 
 # Generate the export header for unleash and attach it to the target

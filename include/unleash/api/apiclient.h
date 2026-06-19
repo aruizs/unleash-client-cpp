@@ -9,7 +9,9 @@ public:
     virtual ~ApiClient() = default;
     virtual std::string features() = 0;
     virtual bool registration(unsigned int refreshInterval) = 0;
-    virtual bool metrics(const std::string &payload) = 0;
+    // Non-pure with a default so existing custom ApiClient implementations keep compiling.
+    // Override it to enable usage-metrics reporting.
+    virtual bool metrics(const std::string & /*payload*/) { return false; }
 };
 }  // namespace unleash
 

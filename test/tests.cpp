@@ -7,6 +7,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <iostream>
+#include <mutex>
 #include <nlohmann/json.hpp>
 #include <thread>
 
@@ -244,9 +245,16 @@ TEST(MetricsTest, ReportsToggleAndVariantCounts) {
     EXPECT_CALL(*apiMock, features()).WillRepeatedly(Return(state));
     EXPECT_CALL(*apiMock, registration(testing::_)).WillRepeatedly(Return(true));
 
+    // The payload is captured on the periodic thread and inspected on the main thread, so guard it
+    // with a mutex to establish a happens-before relationship (and keep ThreadSanitizer happy).
+    std::mutex payloadMutex;
     std::string capturedPayload;
     EXPECT_CALL(*apiMock, metrics(testing::_))
-            .WillRepeatedly(testing::DoAll(testing::SaveArg<0>(&capturedPayload), Return(true)));
+            .WillRepeatedly(testing::Invoke([&](const std::string &payload) {
+                std::scoped_lock lock(payloadMutex);
+                capturedPayload = payload;
+                return true;
+            }));
 
     auto unleashClient = static_cast<unleash::UnleashClient>(unleash::UnleashClient::create("appName", "urlMock")
                                                                      .apiClient(apiMock)
@@ -261,8 +269,13 @@ TEST(MetricsTest, ReportsToggleAndVariantCounts) {
     // Wait for at least one metrics flush from the periodic thread.
     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
-    ASSERT_FALSE(capturedPayload.empty());
-    auto payload = nlohmann::json::parse(capturedPayload);
+    std::string payloadCopy;
+    {
+        std::scoped_lock lock(payloadMutex);
+        payloadCopy = capturedPayload;
+    }
+    ASSERT_FALSE(payloadCopy.empty());
+    auto payload = nlohmann::json::parse(payloadCopy);
     EXPECT_EQ(payload["appName"], "appName");
     const auto &toggles = payload["bucket"]["toggles"];
     ASSERT_TRUE(toggles.contains("metrics.flag"));

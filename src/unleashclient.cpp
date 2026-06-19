@@ -104,7 +104,7 @@ UnleashClient::UnleashClient(UnleashClient &&other) noexcept
       m_cacheFilePath(std::move(other.m_cacheFilePath)),
       m_refreshInterval(other.m_refreshInterval),
       m_thread(std::move(other.m_thread)),
-      m_stopThread(other.m_stopThread),
+      m_stopThread(other.m_stopThread.load()),
       m_isInitialized(other.m_isInitialized),
       m_features(std::move(other.m_features)),
       m_apiClient(std::move(other.m_apiClient)),

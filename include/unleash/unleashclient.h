@@ -4,6 +4,7 @@
 #include "unleash/api/apiclient.h"
 #include "unleash/export.h"
 #include "unleash/feature.h"
+#include <atomic>
 #include <chrono>
 #include <condition_variable>
 #include <functional>
@@ -67,7 +68,7 @@ private:
     std::string m_cacheFilePath;
     unsigned int m_refreshInterval = 15000;
     std::thread m_thread;
-    bool m_stopThread = false;
+    std::atomic<bool> m_stopThread{false};
     bool m_isInitialized = false;
     featuresMap_t m_features;
     mutable std::mutex m_featuresMutex;
