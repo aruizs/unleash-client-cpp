@@ -5,6 +5,7 @@
 #include "unleash/export.h"
 #include "unleash/feature.h"
 #include <condition_variable>
+#include <functional>
 #include <iostream>
 #include <map>
 #include <mutex>
@@ -18,12 +19,16 @@ struct variant_t;
 
 class UNLEASH_EXPORT UnleashClient {
 public:
-    using featuresMap_t = std::map<std::string, Feature>;
+    using featuresMap_t = std::map<std::string, Feature, std::less<>>;
 
     friend class UnleashClientBuilder;
     ~UnleashClient();
     UnleashClient(UnleashClient &&other) noexcept;
-    friend UNLEASH_EXPORT std::ostream &operator<<(std::ostream &os, const UnleashClient &obj);
+    friend UNLEASH_EXPORT std::ostream &operator<<(std::ostream &os, const UnleashClient &obj) {
+        return os << obj.m_name << std::endl
+                  << "with url:" << obj.m_url << std::endl
+                  << "instance id: " << obj.m_instanceId << " in environment: " << obj.m_environment;
+    }
     static UnleashClientBuilder create(std::string name, std::string url);
     void initializeClient();
     bool isEnabled(const std::string &flag);
@@ -36,7 +41,7 @@ private:
     void periodicTask();
     featuresMap_t loadFeatures(std::string_view features) const;
     bool loadFeaturesFromCache();
-    bool saveFeaturestoCache(const std::string &features);
+    bool saveFeaturestoCache(const std::string &features) const;
 
     std::string m_name;
     std::string m_url;

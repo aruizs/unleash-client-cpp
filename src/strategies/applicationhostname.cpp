@@ -6,23 +6,27 @@
 #else
 #include <unistd.h>
 #endif
+#include <cstring>
 #include <sstream>
 
 
 namespace unleash {
 
+constexpr size_t kMaxHostnameLength = 150;
+
 std::string getHostname() {
 #ifdef WIN32
-    TCHAR infoBuf[150];
-    DWORD bufCharCount = 150;
+    TCHAR infoBuf[kMaxHostnameLength];
+    DWORD bufCharCount = kMaxHostnameLength;
     if (GetComputerName(infoBuf, &bufCharCount)) {
         return std::string(infoBuf, bufCharCount);
     }
     return "Unknown_Host_Name";
 #else
-    char name[150] = {0};
-    if (gethostname(name, sizeof(name) - 1) == 0) {
-        return std::string(name);
+    std::string name(kMaxHostnameLength, '\0');
+    if (gethostname(name.data(), kMaxHostnameLength - 1) == 0) {
+        name.resize(std::strlen(name.c_str()));
+        return name;
     }
     return "Unknown_Host_Name";
 #endif

@@ -1,4 +1,5 @@
 #include "unleash/utils/murmur3hash.h"
+#include <cstddef>
 #include <iostream>
 
 //-----------------------------------------------------------------------------
@@ -102,19 +103,19 @@ void murmurHash3X8632(const uint8_t *key, int len, uint32_t seed, uint32_t *out)
     //----------
     // tail
 
-    const auto *tail = data + nblocks * 4;
+    const auto *tail = reinterpret_cast<const std::byte *>(data + nblocks * 4);
 
     uint32_t k1 = 0;
 
     switch (len & 3) {
         case 3:
-            k1 ^= tail[2] << 16;
+            k1 ^= std::to_integer<uint32_t>(tail[2]) << 16;
             [[fallthrough]];
         case 2:
-            k1 ^= tail[1] << 8;
+            k1 ^= std::to_integer<uint32_t>(tail[1]) << 8;
             [[fallthrough]];
         case 1:
-            k1 ^= tail[0];
+            k1 ^= std::to_integer<uint32_t>(tail[0]);
             k1 *= c1;
             k1 = ROTL32(k1, 15);
             k1 *= c2;

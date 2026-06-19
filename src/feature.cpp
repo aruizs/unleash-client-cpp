@@ -33,13 +33,14 @@ variant_t Feature::getVariant(const unleash::Context &context) const {
     auto normalizedValue = normalizedMurmur3(m_name + ":" + context.userId, m_variants.second, seed);
     unsigned int weight = 0;
     for (auto &eachVariant : m_variants.first) {
-        if (!eachVariant->getOverrides().empty() && checkVariant(*eachVariant, variant, context)) break;
-
+        if (!eachVariant->getOverrides().empty() && checkVariant(*eachVariant, variant, context)) {
+            return variant;
+        }
         weight += eachVariant->getWeight();
         if (normalizedValue <= weight) {
             variant.name = eachVariant->getName();
             variant.payload = eachVariant->getPayload();
-            break;
+            return variant;
         }
     }
 

@@ -11,12 +11,6 @@ UnleashClientBuilder UnleashClient::create(std::string name, std::string url) {
     return UnleashClientBuilder{std::move(name), std::move(url)};
 }
 
-std::ostream &operator<<(std::ostream &os, const UnleashClient &obj) {
-    return os << obj.m_name << std::endl
-              << "with url:" << obj.m_url << std::endl
-              << "instance id: " << obj.m_instanceId << " in environment: " << obj.m_environment;
-}
-
 UnleashClientBuilder &UnleashClientBuilder::instanceId(std::string instanceId) {
     unleashClient.m_instanceId = std::move(instanceId);
     return *this;
@@ -175,7 +169,7 @@ bool UnleashClient::loadFeaturesFromCache() {
     }
 }
 
-bool UnleashClient::saveFeaturestoCache(const std::string &features) {
+bool UnleashClient::saveFeaturestoCache(const std::string &features) const {
     if (m_cacheFilePath.empty()) {
         return false;
     }
