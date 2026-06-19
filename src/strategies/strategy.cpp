@@ -20,8 +20,7 @@ Strategy::Strategy(std::string name, std::string_view constraints) : m_name(std:
     auto constraint_json = nlohmann::json::parse(constraints);
     for (const auto &[key, value] : constraint_json.items()) {
         bool hasRequiredFields = value.contains("contextName") && value.contains("operator") && value.contains("values");
-        bool hasValidOperator = value["operator"] == "IN" || value["operator"] == "NOT_IN";
-        if (!hasRequiredFields || !hasValidOperator) {
+        if (bool hasValidOperator = value["operator"] == "IN" || value["operator"] == "NOT_IN"; !hasRequiredFields || !hasValidOperator) {
             continue;
         }
         Constraint strategyConstraint{value["contextName"], value["operator"]};

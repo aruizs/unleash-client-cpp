@@ -60,14 +60,13 @@ void UnleashClient::initializeClient() {
         }
 
         // Initial fetch of feature flags
-        auto apiFeatures = m_apiClient->features();
-        if (apiFeatures.empty()) {
+        if (auto apiFeatures = m_apiClient->features(); apiFeatures.empty()) {
             std::cerr << "Attempted to initialize an Unleash Client instance without server response." << std::endl;
             if (!loadFeaturesFromCache()) {
                 return;
             }
         } else {
-            std::lock_guard<std::mutex> lock(m_featuresMutex);
+            std::scoped_lock lock(m_featuresMutex);
             m_features = loadFeatures(apiFeatures);
         }
         m_thread = std::thread(&UnleashClient::periodicTask, this);
@@ -106,7 +105,7 @@ void UnleashClient::periodicTask() {
             auto features_response = m_apiClient->features();
             if (!features_response.empty()) {
                 saveFeaturestoCache(features_response);
-                std::lock_guard<std::mutex> lock(m_featuresMutex);
+                std::scoped_lock lock(m_featuresMutex);
                 m_features = loadFeatures(features_response);
             } else {
                 loadFeaturesFromCache();
@@ -127,7 +126,7 @@ bool UnleashClient::isEnabled(const std::string &flag) {
 
 bool UnleashClient::isEnabled(const std::string &flag, const Context &context) {
     if (m_isInitialized) {
-        std::lock_guard<std::mutex> lock(m_featuresMutex);
+        std::scoped_lock lock(m_featuresMutex);
         if (auto search = m_features.find(flag); search != m_features.end()) {
             return m_features.at(flag).isEnabled(context);
         }
@@ -138,7 +137,7 @@ bool UnleashClient::isEnabled(const std::string &flag, const Context &context) {
 variant_t UnleashClient::variant(const std::string &flag, const unleash::Context &context) {
     variant_t variant{"disabled", 0, false, false};
     if (m_isInitialized) {
-        std::lock_guard<std::mutex> lock(m_featuresMutex);
+        std::scoped_lock lock(m_featuresMutex);
         if (auto search = m_features.find(flag); search != m_features.end()) {
             variant.featureEnabled = m_features.at(flag).isEnabled(context);
             return m_features.at(flag).getVariant(context);
@@ -159,7 +158,7 @@ bool UnleashClient::loadFeaturesFromCache() {
     try {
         std::stringstream features_buffer;
         features_buffer << cacheFile.rdbuf();
-        std::lock_guard<std::mutex> lock(m_featuresMutex);
+        std::scoped_lock lock(m_featuresMutex);
         m_features = loadFeatures(features_buffer.str());
         std::cout << "Loaded configuration from cache file " << m_cacheFilePath << std::endl;
         return true;

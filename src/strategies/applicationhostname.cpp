@@ -6,7 +6,6 @@
 #else
 #include <unistd.h>
 #endif
-#include <cstring>
 #include <sstream>
 
 
@@ -23,9 +22,8 @@ std::string getHostname() {
     }
     return "Unknown_Host_Name";
 #else
-    std::string name(kMaxHostnameLength, '\0');
-    if (gethostname(name.data(), kMaxHostnameLength - 1) == 0) {
-        name.resize(std::strlen(name.c_str()));
+    if (std::string name(kMaxHostnameLength, '\0'); gethostname(name.data(), kMaxHostnameLength - 1) == 0) {
+        name.resize(name.find('\0'));
         return name;
     }
     return "Unknown_Host_Name";
@@ -44,9 +42,9 @@ ApplicationHostname::ApplicationHostname(std::string_view parameters, std::strin
 }
 
 bool ApplicationHostname::isEnabled(const Context &context) {
-    std::string hostname = getHostname();
-    if (std::find(m_applicationHostnames.begin(), m_applicationHostnames.end(), hostname) == m_applicationHostnames.end())
+    if (auto hostname = getHostname(); std::find(m_applicationHostnames.begin(), m_applicationHostnames.end(), hostname) == m_applicationHostnames.end()) {
         return false;
+    }
     return meetConstraints(context);
 }
 }  // namespace unleash
