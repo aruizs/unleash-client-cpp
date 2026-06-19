@@ -13,17 +13,24 @@ the [Unleash Client Specifications](https://github.com/Unleash/client-specificat
 
 ## Features
 
-The below table shows what features the SDKs support or plan to support.
+The below table shows what features the SDK supports or plans to support.
 
 - [x] Feature toggles
 - [x] Built-in strategies
 - [x] Unleash context
-- [x] Strategy constrains
+- [x] Strategy constraints
+- [x] Constraint operators (IN/NOT_IN, string, numeric, date, SemVer, regex, CIDR)
+- [x] Segments (global constraints)
 - [x] Application registration
 - [x] Variants
-- [ ] Custom stickiness (WIP)
+- [x] Strategy variants
+- [x] Dependent features
+- [x] Custom stickiness
 - [x] Bootstrapping (local cache fallback)
+- [x] Delta API (hydration and event stream)
 - [ ] Usage Metrics
+
+The client passes the full [Unleash Client Specification](https://github.com/Unleash/client-specification) test suite.
 
 ## Requirements
 
@@ -51,7 +58,13 @@ mandatories.
 | Registration          | No        | Bool   | False         |
 | Cache File Path       | No        | String | N/A           |
 
-    unleash::UnleashClient unleashClient = unleash::UnleashClient::create("appName", "unleashServerUrl").instanceId("intanceId").environment("environment").authentication("token").refreshInterval(pollingTime).registration(boolValue);
+    auto unleashClient = static_cast<unleash::UnleashClient>(
+        unleash::UnleashClient::create("appName", "unleashServerUrl")
+            .instanceId("instanceId")
+            .environment("environment")
+            .authentication("token")
+            .refreshInterval(pollingTime)
+            .registration(boolValue));
     unleashClient.initializeClient();
 
 ### Feature Flag is enabled?
@@ -98,9 +111,10 @@ For more information about variants, see the [Variant documentation](https://doc
 The client supports bootstrapping from a local cache file. This provides offline resilience when the Unleash server is unavailable.
 
 ```cpp
-unleash::UnleashClient unleashClient = unleash::UnleashClient::create("appName", "unleashServerUrl")
-    .cacheFilePath("/path/to/cache.json")
-    .initializeClient();
+auto unleashClient = static_cast<unleash::UnleashClient>(
+    unleash::UnleashClient::create("appName", "unleashServerUrl")
+        .cacheFilePath("/path/to/cache.json"));
+unleashClient.initializeClient();
 ```
 
 **How it works:**
