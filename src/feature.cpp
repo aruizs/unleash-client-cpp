@@ -1,6 +1,7 @@
 #include "unleash/feature.h"
 #include "unleash/utils/murmur3hash.h"
 #include <algorithm>
+#include <nlohmann/json.hpp>
 #include <numeric>
 
 namespace unleash {
@@ -19,6 +20,25 @@ bool Feature::isEnabled(const Context &context) const {
 
 void Feature::setVariants(std::pair<std::vector<std::unique_ptr<Variant>>, unsigned int> variants) {
     m_variants = std::move(variants);
+}
+
+void Feature::setDependencies(std::string_view dependencies) {
+    if (dependencies.empty()) {
+        return;
+    }
+    auto dependenciesJson = nlohmann::json::parse(dependencies);
+    for (const auto &[key, value] : dependenciesJson.items()) {
+        Dependency dependency;
+        dependency.feature = value["feature"].get<std::string>();
+        dependency.enabled = value.value("enabled", true);
+        if (value.contains("variants")) {
+            dependency.hasVariants = true;
+            for (const auto &[variantKey, variantValue] : value["variants"].items()) {
+                dependency.variants.push_back(variantValue.get<std::string>());
+            }
+        }
+        m_dependencies.push_back(std::move(dependency));
+    }
 }
 
 variant_t Feature::getVariant(const unleash::Context &context) const {

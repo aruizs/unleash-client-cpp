@@ -39,6 +39,7 @@ public:
 private:
     UnleashClient(std::string name, std::string url);
     void periodicTask();
+    bool dependenciesSatisfied(const Feature &feature, const Context &context) const;
     featuresMap_t loadFeatures(std::string_view features) const;
     bool loadFeaturesFromCache();
     bool saveFeaturestoCache(const std::string &features) const;

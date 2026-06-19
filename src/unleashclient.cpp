@@ -2,6 +2,7 @@
 #include "unleash/api/cprclient.h"
 #include "unleash/strategies/strategy.h"
 #include <nlohmann/json.hpp>
+#include <algorithm>
 #include <fstream>
 #include <sstream>
 
@@ -124,11 +125,37 @@ bool UnleashClient::isEnabled(const std::string &flag) {
     return isEnabled(flag, context);
 }
 
+bool UnleashClient::dependenciesSatisfied(const Feature &feature, const Context &context) const {
+    for (const auto &dependency : feature.getDependencies()) {
+        auto parentIt = m_features.find(dependency.feature);
+        if (parentIt == m_features.end()) {
+            return false;
+        }
+        const Feature &parent = parentIt->second;
+        // Unleash does not allow transitive (or cyclic) dependencies: a parent that is itself a
+        // child cannot satisfy a dependency.
+        if (parent.hasDependencies()) {
+            return false;
+        }
+        if (parent.isEnabled(context) != dependency.enabled) {
+            return false;
+        }
+        if (dependency.enabled && dependency.hasVariants && !dependency.variants.empty()) {
+            auto parentVariant = parent.getVariant(context);
+            if (std::find(dependency.variants.begin(), dependency.variants.end(), parentVariant.name) ==
+                dependency.variants.end()) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
 bool UnleashClient::isEnabled(const std::string &flag, const Context &context) {
     if (m_isInitialized) {
         std::scoped_lock lock(m_featuresMutex);
         if (auto search = m_features.find(flag); search != m_features.end()) {
-            return m_features.at(flag).isEnabled(context);
+            return dependenciesSatisfied(search->second, context) && search->second.isEnabled(context);
         }
     }
     return false;
@@ -139,8 +166,10 @@ variant_t UnleashClient::variant(const std::string &flag, const unleash::Context
     if (m_isInitialized) {
         std::scoped_lock lock(m_featuresMutex);
         if (auto search = m_features.find(flag); search != m_features.end()) {
-            variant.featureEnabled = m_features.at(flag).isEnabled(context);
-            return m_features.at(flag).getVariant(context);
+            if (!dependenciesSatisfied(search->second, context)) {
+                return variant;
+            }
+            return search->second.getVariant(context);
         }
     }
     return variant;
@@ -246,6 +275,10 @@ UnleashClient::featuresMap_t UnleashClient::loadFeatures(std::string_view featur
         // Load variants
         if (value.contains("variants")) {
             newFeature.setVariants(parseVariants(value["variants"]));
+        }
+        // Load dependencies on other features
+        if (value.contains("dependencies")) {
+            newFeature.setDependencies(value["dependencies"].dump());
         }
         featuresMap.try_emplace(value["name"], std::move(newFeature));
     }

@@ -8,10 +8,21 @@
 
 namespace unleash {
 struct Context;
+
+struct Dependency {
+    std::string feature;
+    bool enabled = true;
+    bool hasVariants = false;
+    std::vector<std::string> variants;
+};
+
 class Feature {
 public:
     Feature(std::string name, std::vector<std::unique_ptr<Strategy>> strategies, bool enable);
     void setVariants(std::pair<std::vector<std::unique_ptr<Variant>>, unsigned int> variants);
+    void setDependencies(std::string_view dependencies);
+    const std::vector<Dependency> &getDependencies() const { return m_dependencies; }
+    bool hasDependencies() const { return !m_dependencies.empty(); }
     bool isEnabled(const Context &context) const;
     variant_t getVariant(const Context &context) const;
 
@@ -22,6 +33,7 @@ private:
     bool m_enabled;
     std::vector<std::unique_ptr<Strategy>> m_strategies;
     std::pair<std::vector<std::unique_ptr<Variant>>, unsigned int> m_variants;
+    std::vector<Dependency> m_dependencies;
 };
 }  // namespace unleash
 #endif  //UNLEASH_FEATURE_H
