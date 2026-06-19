@@ -199,14 +199,42 @@ UnleashClient::featuresMap_t UnleashClient::loadFeatures(std::string_view featur
         return variants;
     };
 
+    // Load global segments: id -> list of constraints
+    std::map<int, nlohmann::json> segmentsMap;
+    if (featuresJson.contains("segments")) {
+        for (const auto &segment : featuresJson["segments"]) {
+            segmentsMap[segment["id"].get<int>()] =
+                    segment.contains("constraints") ? segment["constraints"] : nlohmann::json::array();
+        }
+    }
+
+    // Merge a strategy's own constraints with the constraints of its referenced segments. A
+    // reference to a missing segment forces the strategy to never be enabled.
+    auto resolveConstraints = [&segmentsMap](const nlohmann::json &strategyValue) -> std::string {
+        nlohmann::json constraints = nlohmann::json::array();
+        if (strategyValue.contains("constraints")) {
+            for (const auto &constraint : strategyValue["constraints"]) { constraints.push_back(constraint); }
+        }
+        if (strategyValue.contains("segments")) {
+            for (const auto &segmentId : strategyValue["segments"]) {
+                auto segmentIt = segmentsMap.find(segmentId.get<int>());
+                if (segmentIt == segmentsMap.end()) {
+                    // Missing segment: inject an unsatisfiable constraint so the strategy stays disabled.
+                    return nlohmann::json::array({{{"contextName", ""}, {"operator", "MISSING_SEGMENT"}}}).dump();
+                }
+                for (const auto &constraint : segmentIt->second) { constraints.push_back(constraint); }
+            }
+        }
+        return constraints.empty() ? std::string{} : constraints.dump();
+    };
+
     for (const auto &[key, value] : featuresJson["features"].items()) {
         // Load strategies
         std::vector<std::unique_ptr<Strategy>> strategies;
         for (const auto &[strategyKey, strategyValue] : value["strategies"].items()) {
             std::string strategyParameters;
             if (strategyValue.contains("parameters")) strategyParameters = strategyValue["parameters"].dump();
-            std::string strategyConstraints;
-            if (strategyValue.contains("constraints")) { strategyConstraints = strategyValue["constraints"].dump(); }
+            std::string strategyConstraints = resolveConstraints(strategyValue);
             strategies.push_back(Strategy::createStrategy(strategyValue["name"].get<std::string>(), strategyParameters,
                                                           strategyConstraints));
         }
