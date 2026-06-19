@@ -34,8 +34,8 @@ bool FlexibleRollout::isEnabled(const Context &context) {
     } else if (stickinessConfiguration == "random") {
         std::random_device dev;
         std::mt19937 rng(dev());
-        std::uniform_int_distribution<std::mt19937::result_type> dist6(1, 100);
-        if (dist6(rng) > m_rollout) return false;
+        std::uniform_int_distribution<std::mt19937::result_type> distribution(1, 100);
+        if (distribution(rng) > m_rollout) return false;
     } else {
         auto customFieldIt = context.properties.find(stickinessConfiguration);
         if (customFieldIt == context.properties.end()) return false;

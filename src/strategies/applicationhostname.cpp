@@ -31,7 +31,6 @@ std::string getHostname() {
 ApplicationHostname::ApplicationHostname(std::string_view parameters, std::string_view constraints)
     : Strategy("applicationHostname", constraints) {
     auto applicationHostname_json = nlohmann::json::parse(parameters);
-    const std::string delimiter = ",";
     std::stringstream sstream(applicationHostname_json["hostNames"].get<std::string>());
     std::string hostname;
     while (std::getline(sstream, hostname, ',')) {

@@ -16,7 +16,7 @@ bool GradualRolloutRandom::isEnabled(const Context &context) {
     if (!meetConstraints(context)) return false;
     std::random_device dev;
     std::mt19937 rng(dev());
-    std::uniform_int_distribution<std::mt19937::result_type> dist6(1, 100);
-    return dist6(rng) <= m_percentage;
+    std::uniform_int_distribution<std::mt19937::result_type> distribution(1, 100);
+    return distribution(rng) <= m_percentage;
 }
 }  // namespace unleash

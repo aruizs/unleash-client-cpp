@@ -6,7 +6,6 @@ namespace unleash {
 RemoteAddress::RemoteAddress(std::string_view parameters, std::string_view constraints)
     : Strategy("remoteAddress", constraints) {
     auto remoteAddress_json = nlohmann::json::parse(parameters);
-    const std::string delimiter = ",";
     std::stringstream sstream(remoteAddress_json["IPs"].get<std::string>());
     std::string ip;
     while (std::getline(sstream, ip, ',')) {
