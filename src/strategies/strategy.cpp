@@ -40,6 +40,104 @@ bool parseDouble(const std::string &str, double &result) {
     }
 }
 
+struct SemVer {
+    int major = 0;
+    int minor = 0;
+    int patch = 0;
+    std::vector<std::string> prerelease;
+    bool valid = false;
+};
+
+bool isAllDigits(const std::string &s) {
+    return !s.empty() && std::all_of(s.begin(), s.end(), [](unsigned char c) { return std::isdigit(c); });
+}
+
+SemVer parseSemVer(const std::string &version) {
+    SemVer sv;
+    if (version.empty() || version[0] == 'v' || version[0] == 'V') {
+        return sv;
+    }
+
+    std::string versionPart = version;
+    std::string prereleaseStr;
+
+    if (auto hyphenPos = version.find('-'); hyphenPos != std::string::npos) {
+        versionPart = version.substr(0, hyphenPos);
+        prereleaseStr = version.substr(hyphenPos + 1);
+        if (auto plusPos = prereleaseStr.find('+'); plusPos != std::string::npos) {
+            prereleaseStr = prereleaseStr.substr(0, plusPos);
+        }
+    } else if (auto plusPos = version.find('+'); plusPos != std::string::npos) {
+        versionPart = version.substr(0, plusPos);
+    }
+
+    int major, minor, patch;
+    char dot1, dot2;
+    std::istringstream iss(versionPart);
+    if (!(iss >> major >> dot1 >> minor >> dot2 >> patch) || dot1 != '.' || dot2 != '.') {
+        return sv;
+    }
+    std::string remaining;
+    if (iss >> remaining) {
+        return sv;
+    }
+
+    sv.major = major;
+    sv.minor = minor;
+    sv.patch = patch;
+    sv.valid = true;
+
+    if (!prereleaseStr.empty()) {
+        std::istringstream prss(prereleaseStr);
+        std::string token;
+        while (std::getline(prss, token, '.')) {
+            if (token.empty()) {
+                sv.valid = false;
+                return sv;
+            }
+            sv.prerelease.push_back(token);
+        }
+    }
+
+    return sv;
+}
+
+int compareSemVer(const SemVer &a, const SemVer &b) {
+    if (a.major != b.major) return a.major < b.major ? -1 : 1;
+    if (a.minor != b.minor) return a.minor < b.minor ? -1 : 1;
+    if (a.patch != b.patch) return a.patch < b.patch ? -1 : 1;
+
+    if (a.prerelease.empty() && b.prerelease.empty()) return 0;
+    if (a.prerelease.empty()) return 1;
+    if (b.prerelease.empty()) return -1;
+
+    size_t maxLen = std::max(a.prerelease.size(), b.prerelease.size());
+    for (size_t i = 0; i < maxLen; ++i) {
+        if (i >= a.prerelease.size()) return -1;
+        if (i >= b.prerelease.size()) return 1;
+
+        const std::string &pa = a.prerelease[i];
+        const std::string &pb = b.prerelease[i];
+
+        bool aIsNum = isAllDigits(pa);
+        bool bIsNum = isAllDigits(pb);
+
+        if (aIsNum && bIsNum) {
+            int na = std::stoi(pa);
+            int nb = std::stoi(pb);
+            if (na != nb) return na < nb ? -1 : 1;
+        } else if (aIsNum) {
+            return -1;
+        } else if (bIsNum) {
+            return 1;
+        } else {
+            int cmp = pa.compare(pb);
+            if (cmp != 0) return cmp < 0 ? -1 : 1;
+        }
+    }
+    return 0;
+}
+
 std::chrono::system_clock::time_point parseIso8601(const std::string &dateStr) {
     std::tm tm = {};
     std::istringstream ss(dateStr);
@@ -101,7 +199,8 @@ bool isValidOperator(const std::string &op) {
         "IN", "NOT_IN",
         "STR_STARTS_WITH", "STR_ENDS_WITH", "STR_CONTAINS",
         "NUM_EQ", "NUM_GT", "NUM_GTE", "NUM_LT", "NUM_LTE",
-        "DATE_AFTER", "DATE_BEFORE"
+        "DATE_AFTER", "DATE_BEFORE",
+        "SEMVER_EQ", "SEMVER_GT", "SEMVER_GTE", "SEMVER_LT", "SEMVER_LTE"
     };
     return std::find(validOperators.begin(), validOperators.end(), op) != validOperators.end();
 }
@@ -272,6 +371,29 @@ bool Strategy::checkContextConstraint(const Context &context, const Constraint &
                 result = contextTime > constraintTime;
             } else {
                 result = contextTime < constraintTime;
+            }
+        }
+    } else if (op == "SEMVER_EQ" || op == "SEMVER_GT" || op == "SEMVER_GTE" || op == "SEMVER_LT" || op == "SEMVER_LTE") {
+        if (!contextValueExists) {
+            result = false;
+        } else {
+            SemVer contextSv = parseSemVer(contextValue);
+            SemVer constraintSv = parseSemVer(constraint.value);
+            if (!contextSv.valid || !constraintSv.valid) {
+                result = false;
+            } else {
+                int cmp = compareSemVer(contextSv, constraintSv);
+                if (op == "SEMVER_EQ") {
+                    result = cmp == 0;
+                } else if (op == "SEMVER_GT") {
+                    result = cmp > 0;
+                } else if (op == "SEMVER_GTE") {
+                    result = cmp >= 0;
+                } else if (op == "SEMVER_LT") {
+                    result = cmp < 0;
+                } else if (op == "SEMVER_LTE") {
+                    result = cmp <= 0;
+                }
             }
         }
     }
