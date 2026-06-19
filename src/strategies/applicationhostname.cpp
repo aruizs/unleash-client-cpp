@@ -11,23 +11,21 @@
 
 namespace unleash {
 
-void getHostname(char machineName[150]) {
-    char Name[150];
-
+std::string getHostname() {
 #ifdef WIN32
     TCHAR infoBuf[150];
     DWORD bufCharCount = 150;
-    memset(Name, 0, 150);
     if (GetComputerName(infoBuf, &bufCharCount)) {
-        for (size_t i = 0; i < 150; i++) { Name[i] = infoBuf[i]; }
-    } else {
-        strcpy(Name, "Unknown_Host_Name");
+        return std::string(infoBuf, bufCharCount);
     }
+    return "Unknown_Host_Name";
 #else
-    memset(Name, 0, 150);
-    gethostname(Name, 150);
+    char name[150] = {0};
+    if (gethostname(name, sizeof(name) - 1) == 0) {
+        return std::string(name);
+    }
+    return "Unknown_Host_Name";
 #endif
-    strncpy(machineName, Name, 150);
 }
 
 ApplicationHostname::ApplicationHostname(std::string_view parameters, std::string_view constraints)
@@ -43,11 +41,8 @@ ApplicationHostname::ApplicationHostname(std::string_view parameters, std::strin
 }
 
 bool ApplicationHostname::isEnabled(const Context &context) {
-    char hostnameC[150];
-    getHostname(hostnameC);
-
-    if (std::string hostname{hostnameC}; std::find(m_applicationHostnames.begin(), m_applicationHostnames.end(),
-                                                   hostname) == m_applicationHostnames.end())
+    std::string hostname = getHostname();
+    if (std::find(m_applicationHostnames.begin(), m_applicationHostnames.end(), hostname) == m_applicationHostnames.end())
         return false;
     return meetConstraints(context);
 }
