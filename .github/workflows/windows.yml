@@ -63,14 +63,18 @@ jobs:
       run: |
         $installer = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer"
         $vs = & "$installer\vswhere.exe" -latest -property installationPath
+        # Single-string ArgumentList: the array form mangles the quoting of the
+        # space-containing --installPath and makes setup.exe fail.
         $p = Start-Process -FilePath "$installer\setup.exe" -Wait -PassThru -ArgumentList `
-          "modify","--installPath","$vs","--quiet","--norestart","--add","Microsoft.VisualStudio.Component.VC.14.44.17.14.x86.x64"
-        if ($p.ExitCode -ne 0) { throw "VS modify exited with $($p.ExitCode)" }
+          "modify --installPath `"$vs`" --quiet --norestart --add Microsoft.VisualStudio.Component.VC.14.44.17.14.x86.x64"
         Write-Host "VS install path: $vs"
+        Write-Host "VS modify exit code: $($p.ExitCode)"
         Write-Host "Installed MSVC toolsets:"
         Get-ChildItem "$vs\VC\Tools\MSVC" -Name
         # Share the resolved VS path with the build step (runner edition/path is not fixed).
         "VSPATH=$vs" | Out-File -FilePath $env:GITHUB_ENV -Append
+        # 3010 = success, reboot required.
+        if ($p.ExitCode -ne 0 -and $p.ExitCode -ne 3010) { throw "VS modify failed: $($p.ExitCode)" }
 
     - name: Get Conan
       uses: turtlebrowser/get-conan@v1.0
