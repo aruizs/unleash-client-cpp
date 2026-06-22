@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.4] - 2026-06-22
+
+### Fixed
+- Build on MSVC toolchains older than `_MSC_VER` 1950 (VS 2022 v17.50), which do
+  not provide `std::regex_constants::multiline`. The `(?m)` inline regex flag is
+  ignored on those compilers so the library still builds; it works as before on
+  newer MSVC, libstdc++, and libc++.
+
 ## [1.5.3] - 2026-06-22
 
 ### Added
@@ -95,7 +103,8 @@ Baseline published on Conan Center. Feature toggles, built-in strategies,
 Unleash context, strategy constraints, application registration, variants,
 custom stickiness, and bootstrapping from a local cache file.
 
-[Unreleased]: https://github.com/aruizs/unleash-client-cpp/compare/v1.5.3...HEAD
+[Unreleased]: https://github.com/aruizs/unleash-client-cpp/compare/v1.5.4...HEAD
+[1.5.4]: https://github.com/aruizs/unleash-client-cpp/releases/tag/v1.5.4
 [1.5.3]: https://github.com/aruizs/unleash-client-cpp/releases/tag/v1.5.3
 [1.5.2]: https://github.com/aruizs/unleash-client-cpp/releases/tag/v1.5.2
 [1.5.1]: https://github.com/aruizs/unleash-client-cpp/releases/tag/v1.5.1

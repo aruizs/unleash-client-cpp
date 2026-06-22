@@ -289,7 +289,11 @@ std::string processInlineFlags(std::string pattern, std::regex::flag_type &flags
     for (std::sregex_iterator it(pattern.begin(), pattern.end(), flagGroup), end; it != end; ++it) {
         const std::string letters = (*it)[1].str();
         if (letters.find('i') != std::string::npos) flags |= std::regex::icase;
+        // std::regex_constants::multiline is unavailable on the MSVC STL before _MSC_VER 1950
+        // (VS 2022 v17.50). On those toolchains the (?m) flag is ignored so the library still builds.
+#if !defined(_MSC_VER) || _MSC_VER >= 1950
         if (letters.find('m') != std::string::npos) flags |= std::regex_constants::multiline;
+#endif
         if (letters.find('s') != std::string::npos) dotAll = true;
     }
     pattern = std::regex_replace(pattern, flagGroup, "");
