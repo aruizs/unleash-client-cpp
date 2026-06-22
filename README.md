@@ -227,7 +227,7 @@ To build with a sanitizer (used by CI), configure with `-DUNLEASH_SANITIZER=addr
 
 ### Conan
 
-This package is published in Conan Center as [unleash-client-cpp/1.5.1](https://conan.io/center/unleash-client-cpp).
+This package is published in Conan Center as [unleash-client-cpp/1.5.3](https://conan.io/center/unleash-client-cpp).
 
 ### vcpkg
 

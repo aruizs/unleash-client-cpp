@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.3] - 2026-06-22
+
 ### Added
 - Custom activation strategies: subclass `unleash::Strategy` and register a factory with
   `UnleashClientBuilder::registerStrategy()`. A registered name overrides the built-in
@@ -90,7 +92,8 @@ Baseline published on Conan Center. Feature toggles, built-in strategies,
 Unleash context, strategy constraints, application registration, variants,
 custom stickiness, and bootstrapping from a local cache file.
 
-[Unreleased]: https://github.com/aruizs/unleash-client-cpp/compare/v1.5.2...HEAD
+[Unreleased]: https://github.com/aruizs/unleash-client-cpp/compare/v1.5.3...HEAD
+[1.5.3]: https://github.com/aruizs/unleash-client-cpp/releases/tag/v1.5.3
 [1.5.2]: https://github.com/aruizs/unleash-client-cpp/releases/tag/v1.5.2
 [1.5.1]: https://github.com/aruizs/unleash-client-cpp/releases/tag/v1.5.1
 [1.5.0]: https://github.com/aruizs/unleash-client-cpp/releases/tag/v1.5.0
