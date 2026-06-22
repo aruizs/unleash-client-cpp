@@ -12,6 +12,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `UnleashClientBuilder::registerStrategy()`. A registered name overrides the built-in
   strategy of the same name.
 
+### Fixed
+- Use `std::regex_constants::multiline` instead of the `std::regex::multiline` static
+  member, which some MSVC toolchains do not provide — the `REGEX` operator failed to
+  compile with `'multiline': is not a member of 'std::basic_regex'`.
+
 ## [1.5.2] - 2026-06-19
 
 ### Added

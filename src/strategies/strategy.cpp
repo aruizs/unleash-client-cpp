@@ -289,7 +289,7 @@ std::string processInlineFlags(std::string pattern, std::regex::flag_type &flags
     for (std::sregex_iterator it(pattern.begin(), pattern.end(), flagGroup), end; it != end; ++it) {
         const std::string letters = (*it)[1].str();
         if (letters.find('i') != std::string::npos) flags |= std::regex::icase;
-        if (letters.find('m') != std::string::npos) flags |= std::regex::multiline;
+        if (letters.find('m') != std::string::npos) flags |= std::regex_constants::multiline;
         if (letters.find('s') != std::string::npos) dotAll = true;
     }
     pattern = std::regex_replace(pattern, flagGroup, "");
