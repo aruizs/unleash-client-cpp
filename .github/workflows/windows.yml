@@ -84,6 +84,8 @@ jobs:
         call "%VSPATH%\VC\Auxiliary\Build\vcvarsall.bat" x64 -vcvars_ver=14.44 || exit /b 1
         cl 2>&1 | findstr /C:"Version"
         conan profile detect --force
-        conan install . -s build_type=%BUILD_TYPE% -s compiler.cppstd=17 -s compiler.version=194 -c tools.cmake.cmaketoolchain:generator=Ninja --build=missing || exit /b 1
+        REM compiler.version=194 selects the 19.4x (v14.44) toolset; vs_version=18 points
+        REM Conan at the VS 2026 IDE that hosts it (the runner has no VS 17).
+        conan install . -s build_type=%BUILD_TYPE% -s compiler.cppstd=17 -s compiler.version=194 -c tools.cmake.cmaketoolchain:generator=Ninja -c tools.microsoft.msbuild:vs_version=18 --build=missing || exit /b 1
         cmake --preset conan-release -DUNLEASH_ENABLE_TESTING=OFF || exit /b 1
         cmake --build --preset conan-release --target unleash || exit /b 1
