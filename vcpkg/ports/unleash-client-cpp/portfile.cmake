@@ -2,7 +2,7 @@ vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
     REPO aruizs/unleash-client-cpp
     REF "v${VERSION}"
-    SHA512 96e1b4096b2aa3baba2c767f08f9da0e4172dbda0b11516af615596a80cefe7da372be6a49b8fc5a60ab635238c145a3e692ecfafcff26161671b79e0265c08f
+    SHA512 61c1cce7c4ad1b994b0c233978ef45b109a503d2812b9cd68e9b9b97277a37bdbeedc080c706b90a76945f3039fc13316b51f213d1de093fdb2f9dee8e6ccdd1
     HEAD_REF main
 )
 
