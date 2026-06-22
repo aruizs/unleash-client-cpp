@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Make `Strategy` explicitly non-copyable. Exporting the class (for custom strategies)
+  made MSVC emit the implicit copy constructor for a DLL build, which failed to compile
+  because `Strategy` owns a `std::vector<std::unique_ptr<Variant>>`.
+
 ## [1.5.3] - 2026-06-22
 
 ### Added

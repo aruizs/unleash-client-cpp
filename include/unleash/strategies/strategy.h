@@ -29,6 +29,12 @@ class UNLEASH_EXPORT Strategy {
 public:
     explicit Strategy(std::string name, std::string_view constraints = {});
     virtual ~Strategy() = default;
+    // Strategy owns move-only members (m_variants) and is always handled through
+    // std::unique_ptr<Strategy>, so it is non-copyable. Declaring this explicitly also
+    // stops MSVC from emitting the implicit copy operations when the class is dllexport'd,
+    // which would otherwise fail to compile (copying a vector<unique_ptr<>>).
+    Strategy(const Strategy &) = delete;
+    Strategy &operator=(const Strategy &) = delete;
     virtual bool isEnabled(const Context &context) = 0;
     static std::unique_ptr<Strategy> createStrategy(std::string_view strategy, std::string_view parameters,
                                                     std::string_view constraints = {});
