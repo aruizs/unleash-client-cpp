@@ -7,11 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Fixed
-- Make `Strategy` explicitly non-copyable. Exporting the class (for custom strategies)
-  made MSVC emit the implicit copy constructor for a DLL build, which failed to compile
-  because `Strategy` owns a `std::vector<std::unique_ptr<Variant>>`.
-
 ## [1.5.3] - 2026-06-22
 
 ### Added
@@ -23,6 +18,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Use `std::regex_constants::multiline` instead of the `std::regex::multiline` static
   member, which some MSVC toolchains do not provide — the `REGEX` operator failed to
   compile with `'multiline': is not a member of 'std::basic_regex'`.
+- Make `Strategy` explicitly non-copyable. Exporting the class (for custom strategies)
+  made MSVC emit the implicit copy constructor for a DLL build, which failed to compile
+  because `Strategy` owns a `std::vector<std::unique_ptr<Variant>>`.
 
 ## [1.5.2] - 2026-06-19
 
