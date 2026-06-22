@@ -41,3 +41,7 @@ CMakePresets.json
 
 # IDE settings
 .idea
+
+# Python virtual environments
+venv/
+.venv/
